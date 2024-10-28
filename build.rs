@@ -11,8 +11,11 @@ fn main() {
     println!("cargo:rustc-link-lib=dylib=amdhip64");
 
     // Tell rustc to use hipcc for linking
-    println!("cargo:rustc-link-arg=-fgpu-rdc");
-    println!("cargo:rustc-link-arg=-hipcc");
+    // println!("cargo:rustc-link-arg=-fgpu-rdc");
+    // println!("cargo:rustc-link-arg=-hipcc");
+
+    // Tell cargo to use hipcc as the linker
+    println!("cargo:rustc-linker=hipcc");
 
     // Generate bindings
     let bindings = bindgen::Builder::default()
@@ -40,6 +43,8 @@ fn main() {
         .derive_eq(true)
         .derive_hash(true)
         .trust_clang_mangling(false)
+        .clang_arg("-x")
+        .clang_arg("c++")
         .generate()
         .expect("Unable to generate bindings");
 
@@ -58,7 +63,9 @@ fn main() {
         // Use the HIP compiler flags
         .compiler("hipcc") // Use the HIP compiler
         // Add HIP-specific compilation flags
-        .flag("-xhip")
+        //.flag("-xhip")
+        .flag("-x")
+        .flag("hip")
         .flag("-fgpu-rdc")
         .file("src/bindings/native.cpp")
         .compile("native");
