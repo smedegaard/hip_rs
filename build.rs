@@ -15,6 +15,7 @@ fn main() {
         .header("src/bindings/wrapper.hpp")
         // Add the HIP include path for bindgen
         .clang_arg("-I/opt/rocm/include")
+        .clang_arg("-D__HIP_PLATFORM_AMD__")
         .trust_clang_mangling(false)
         .generate()
         .expect("Unable to generate bindings");
@@ -30,6 +31,7 @@ fn main() {
         .cpp(true)
         // Add the HIP include path for our C++ compilation
         .include("/opt/rocm/include")
+        .define("__HIP_PLATFORM_AMD", None)
         .file("src/bindings/native.cpp")
         .compile("native");
 }
