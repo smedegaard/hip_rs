@@ -17,6 +17,24 @@ fn main() {
         .clang_arg("-I/opt/rocm/include")
         // Define AMD platform (note the double underscores)
         .clang_arg("-D__HIP_PLATFORM_AMD__")
+        // Only block std lib floating point constants that cause duplicates
+        .blocklist_item("FP_INT_.*") // std lib floating point rounding modes
+        .blocklist_item("FP_NAN") // std lib floating point categories
+        .blocklist_item("FP_INFINITE")
+        .blocklist_item("FP_ZERO")
+        .blocklist_item("FP_SUBNORMAL")
+        .blocklist_item("FP_NORMAL")
+        // Block problematic C++ template internals
+        .blocklist_item("_Tp")
+        .blocklist_item("_Value")
+        // Allow all HIP types and functions through
+        .allowlist_type("hip.*") // Allow all HIP types
+        .allowlist_function("hip.*") // Allow all HIP functions
+        // Generate proper types
+        .size_t_is_usize(true)
+        .derive_default(true)
+        .derive_eq(true)
+        .derive_hash(true)
         .trust_clang_mangling(false)
         .generate()
         .expect("Unable to generate bindings");
@@ -34,8 +52,8 @@ fn main() {
         // Define AMD platform (note the double underscores)
         .define("__HIP_PLATFORM_AMD__", None)
         // Use the HIP compiler flags
-        .flag("-x hip") // Treat as HIP source
         .compiler("hipcc") // Use the HIP compiler
+        .flag("-xhip")
         .file("src/bindings/native.cpp")
         .compile("native");
 }

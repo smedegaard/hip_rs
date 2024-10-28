@@ -8,9 +8,19 @@ pub fn initialize() -> Result<(), i32> {
     let result = unsafe { bindings::hip_initialize() };
     if result != 0 {
         // hipSuccess is 0
-        return Err(result);
+        // Convert hipError_t (u32) to i32
+        return Err(result.try_into().unwrap());
     }
     Ok(())
+}
+
+pub fn get_device_count() -> Result<i32, i32> {
+    let mut count = 0;
+    let result = unsafe { bindings::hip_get_device_count(&mut count) };
+    if result != 0 {
+        return Err(result.try_into().unwrap());
+    }
+    Ok(count)
 }
 
 #[cfg(test)]
@@ -19,9 +29,8 @@ mod tests {
 
     #[test]
     fn test_hip_init() {
-        match initialize() {
-            Ok(()) => println!("HIP initialized successfully"),
-            Err(e) => panic!("Failed to initialize HIP: error {}", e),
-        }
+        initialize().expect("Failed to initialize HIP");
+        let count = get_device_count().expect("Failed to get device count");
+        println!("Found {} HIP devices", count);
     }
 }
