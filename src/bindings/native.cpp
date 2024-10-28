@@ -1,11 +1,9 @@
 #include "wrapper.hpp"
 
-int add_numbers(int a, int b) {
-    return a + b;
+hipError_t hip_initialize() {
+    return hipInit(0);
 }
 
-int get_device_count() {
-    // For now, just return 0
-    // We'll implement this with HIP later
-    return 0;
+hipError_t hip_get_device_count(int* count) {
+    return hipGetDeviceCount(count);
 }

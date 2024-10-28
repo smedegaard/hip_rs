@@ -1,14 +1,17 @@
-// Header guard - prevents multiple inclusions
 #pragma once
 
+#include <hip/hip_runtime.h>
+
 #ifdef __cplusplus
-extern "C" {    // Begin C linkage specification
+extern "C" {
 #endif
 
-// Function declarations
-int add_numbers(int a, int b);
-int get_device_count();
+// Initialize HIP and check for errors
+hipError_t hip_initialize();
+
+// Get number of available GPU devices
+hipError_t hip_get_device_count(int* count);
 
 #ifdef __cplusplus
-}               // End C linkage specification
+}
 #endif
