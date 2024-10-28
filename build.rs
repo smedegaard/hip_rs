@@ -10,6 +10,10 @@ fn main() {
     // Link against the HIP runtime library
     println!("cargo:rustc-link-lib=dylib=amdhip64");
 
+    // Tell rustc to use hipcc for linking
+    println!("cargo:rustc-link-arg=-fgpu-rdc");
+    println!("cargo:rustc-link-arg=-hipcc");
+
     // Generate bindings
     let bindings = bindgen::Builder::default()
         .header("src/bindings/wrapper.hpp")
@@ -53,7 +57,9 @@ fn main() {
         .define("__HIP_PLATFORM_AMD__", None)
         // Use the HIP compiler flags
         .compiler("hipcc") // Use the HIP compiler
+        // Add HIP-specific compilation flags
         .flag("-xhip")
+        .flag("-fgpu-rdc")
         .file("src/bindings/native.cpp")
         .compile("native");
 }
