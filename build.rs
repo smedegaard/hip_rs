@@ -13,8 +13,9 @@ fn main() {
     // Generate bindings
     let bindings = bindgen::Builder::default()
         .header("src/bindings/wrapper.hpp")
-        // Add the HIP include path for bindgen
+        // Add the HIP include path
         .clang_arg("-I/opt/rocm/include")
+        // Define AMD platform (note the double underscores)
         .clang_arg("-D__HIP_PLATFORM_AMD__")
         .trust_clang_mangling(false)
         .generate()
@@ -29,9 +30,12 @@ fn main() {
     // Compile our C++ code
     cc::Build::new()
         .cpp(true)
-        // Add the HIP include path for our C++ compilation
         .include("/opt/rocm/include")
-        .define("__HIP_PLATFORM_AMD", None)
+        // Define AMD platform (note the double underscores)
+        .define("__HIP_PLATFORM_AMD__", None)
+        // Use the HIP compiler flags
+        .flag("-x hip") // Treat as HIP source
+        .compiler("hipcc") // Use the HIP compiler
         .file("src/bindings/native.cpp")
         .compile("native");
 }
