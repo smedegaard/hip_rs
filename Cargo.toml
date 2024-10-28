@@ -1,0 +1,14 @@
+[package]
+name = "hip-rs"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+# For C++ bindings
+bindgen = "0.69.1"
+cpp = "0.5.9"
+
+[build-dependencies]
+# For build script
+cc = "1.0"
+bindgen = "0.69.1"
