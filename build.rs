@@ -16,11 +16,11 @@ fn main() {
     println!("cargo:rustc-link-search=native={}", hip_lib_path);
     println!("cargo:rustc-link-lib=dylib=amdhip64");
 
-    // Tell cargo to use hipcc as the linker
-    // Note: This needs to be conditional based on target platform
+    // Tell cargo to use hipcc as the linker, whether we're testing or not
     if env::var("CARGO_CFG_TARGET_OS").unwrap() == "linux" {
-        println!("cargo:rustc-link-arg=-fgpu-rdc");
-        println!("cargo:rustc-linker=hipcc");
+        // hardcode now, use `rocm_path` to build path later
+        println!("cargo:rustc-linker=/opt/rocm/bin/hipcc");
+        println!("cargo:rustc-link-arg=--hip-link");
     }
 
     // Generate bindings
@@ -74,8 +74,6 @@ fn compile_native_code(hip_include_path: &str) {
         .compiler("hipcc")
         .flag("-x")
         .flag("hip")
-        .flag_if_supported("-fgpu-rdc")
-        // Optional: Add debug/release-specific flags
         .file("src/bindings/native.cpp")
         .compile("native");
 }
