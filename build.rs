@@ -1,48 +1,59 @@
+use std::env;
 use std::path::PathBuf;
 
 fn main() {
+    // Tell cargo when to rerun this build script
     println!("cargo:rerun-if-changed=src/bindings/wrapper.hpp");
     println!("cargo:rerun-if-changed=src/bindings/native.cpp");
     println!("cargo:rerun-if-changed=build.rs");
 
-    // Tell cargo to look for HIP shared libraries in /opt/rocm/lib
-    println!("cargo:rustc-link-search=/opt/rocm/lib");
-    // Link against the HIP runtime library
+    // Set up HIP paths - making them configurable via environment variables
+    let rocm_path = env::var("ROCM_PATH").unwrap_or_else(|_| "/opt/rocm".to_string());
+    let hip_lib_path = format!("{}/lib", rocm_path);
+    let hip_include_path = format!("{}/include", rocm_path);
+
+    // Configure library search paths and linking
+    println!("cargo:rustc-link-search=native={}", hip_lib_path);
     println!("cargo:rustc-link-lib=dylib=amdhip64");
 
-    // Tell rustc to use hipcc for linking
-    // println!("cargo:rustc-link-arg=-fgpu-rdc");
-    // println!("cargo:rustc-link-arg=-hipcc");
-
     // Tell cargo to use hipcc as the linker
-    println!("cargo:rustc-linker=hipcc");
+    // Note: This needs to be conditional based on target platform
+    if env::var("CARGO_CFG_TARGET_OS").unwrap() == "linux" {
+        println!("cargo:rustc-link-arg=-fgpu-rdc");
+        println!("cargo:rustc-linker=hipcc");
+    }
 
     // Generate bindings
+    generate_bindings(&hip_include_path);
+
+    // Compile native code
+    compile_native_code(&hip_include_path);
+}
+
+fn generate_bindings(hip_include_path: &str) {
     let bindings = bindgen::Builder::default()
         .header("src/bindings/wrapper.hpp")
-        // Add the HIP include path
-        .clang_arg("-I/opt/rocm/include")
-        // Define AMD platform (note the double underscores)
+        .clang_arg(&format!("-I{}", hip_include_path))
         .clang_arg("-D__HIP_PLATFORM_AMD__")
-        // Only block std lib floating point constants that cause duplicates
-        .blocklist_item("FP_INT_.*") // std lib floating point rounding modes
-        .blocklist_item("FP_NAN") // std lib floating point categories
+        // Blocklist problematic items
+        .blocklist_item("FP_INT_.*")
+        .blocklist_item("FP_NAN")
         .blocklist_item("FP_INFINITE")
         .blocklist_item("FP_ZERO")
         .blocklist_item("FP_SUBNORMAL")
         .blocklist_item("FP_NORMAL")
-        // Block problematic C++ template internals
         .blocklist_item("_Tp")
         .blocklist_item("_Value")
-        // Allow all HIP types and functions through
-        .allowlist_type("hip.*") // Allow all HIP types
-        .allowlist_function("hip.*") // Allow all HIP functions
+        // Allow HIP items
+        .allowlist_type("hip.*")
+        .allowlist_function("hip.*")
         // Generate proper types
         .size_t_is_usize(true)
         .derive_default(true)
         .derive_eq(true)
         .derive_hash(true)
         .trust_clang_mangling(false)
+        // Handle C++
         .clang_arg("-x")
         .clang_arg("c++")
         .generate()
@@ -53,20 +64,19 @@ fn main() {
     bindings
         .write_to_file(out_path.join("bindings.rs"))
         .expect("Couldn't write bindings!");
+}
 
-    // Compile our C++ code
+fn compile_native_code(hip_include_path: &str) {
     cc::Build::new()
         .cpp(true)
-        .include("/opt/rocm/include")
-        // Define AMD platform (note the double underscores)
+        .include(hip_include_path)
         .define("__HIP_PLATFORM_AMD__", None)
-        // Use the HIP compiler flags
-        .compiler("hipcc") // Use the HIP compiler
-        // Add HIP-specific compilation flags
-        //.flag("-xhip")
+        .compiler("hipcc")
         .flag("-x")
         .flag("hip")
         .flag("-fgpu-rdc")
+        // Optional: Add debug/release-specific flags
+        .flag(if cfg!(debug_assertions) { "-g" } else { "-O3" })
         .file("src/bindings/native.cpp")
         .compile("native");
 }
