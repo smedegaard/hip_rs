@@ -18,16 +18,11 @@ fn main() {
 
     // Tell cargo to use hipcc as the linker, whether we're testing or not
     if env::var("CARGO_CFG_TARGET_OS").unwrap() == "linux" {
-        // hardcode now, use `rocm_path` to build path later
         println!("cargo:rustc-linker={}", hipcc_path);
-        //println!("cargo:rustc-link-arg=--hip-link");
     }
 
     // Generate bindings
     generate_bindings(&hip_include_path);
-
-    // Compile native code
-    //compile_native_code(&hip_include_path);
 }
 
 fn generate_bindings(hip_include_path: &str) {
@@ -65,15 +60,3 @@ fn generate_bindings(hip_include_path: &str) {
         .write_to_file(out_path.join("hip_sys.rs"))
         .expect("Couldn't write bindings!");
 }
-
-// fn compile_native_code(hip_include_path: &str) {
-//     cc::Build::new()
-//         .cpp(true)
-//         .include(hip_include_path)
-//         .define("__HIP_PLATFORM_AMD__", None)
-//         .compiler("hipcc")
-//         .flag("-x")
-//         .flag("hip")
-//         .file("src/bindings/native.cpp")
-//         .compile("native");
-// }
