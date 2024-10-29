@@ -5,7 +5,7 @@
 mod hip_sys;
 
 pub fn initialize() -> Result<(), i32> {
-    let result = unsafe { hip_sys::hipInit() };
+    let result = unsafe { hip_sys::hipInit(0) };
     if result != 0 {
         // hipSuccess is 0
         // Convert hipError_t (u32) to i32
