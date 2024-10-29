@@ -20,7 +20,7 @@ fn main() {
     if env::var("CARGO_CFG_TARGET_OS").unwrap() == "linux" {
         // hardcode now, use `rocm_path` to build path later
         println!("cargo:rustc-linker={}", hipcc_path);
-        println!("cargo:rustc-link-arg=--hip-link");
+        //println!("cargo:rustc-link-arg=--hip-link");
     }
 
     // Generate bindings
