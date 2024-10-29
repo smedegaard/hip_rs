@@ -3,14 +3,14 @@ use std::path::PathBuf;
 
 fn main() {
     // Tell cargo when to rerun this build script
-    println!("cargo:rerun-if-changed=src/bindings/wrapper.hpp");
-    println!("cargo:rerun-if-changed=src/bindings/native.cpp");
+    println!("cargo:rerun-if-changed=src/hip_sys/wrapper.hpp");
     println!("cargo:rerun-if-changed=build.rs");
 
     // Set up HIP paths - making them configurable via environment variables
     let rocm_path = env::var("ROCM_PATH").unwrap_or_else(|_| "/opt/rocm".to_string());
     let hip_lib_path = format!("{}/lib", rocm_path);
     let hip_include_path = format!("{}/include", rocm_path);
+    let hipcc_path = format!("{}/bin/hipcc", rocm_path);
 
     // Configure library search paths and linking
     println!("cargo:rustc-link-search=native={}", hip_lib_path);
@@ -19,7 +19,7 @@ fn main() {
     // Tell cargo to use hipcc as the linker, whether we're testing or not
     if env::var("CARGO_CFG_TARGET_OS").unwrap() == "linux" {
         // hardcode now, use `rocm_path` to build path later
-        println!("cargo:rustc-linker=/opt/rocm/bin/hipcc");
+        println!("cargo:rustc-linker={}", hipcc_path);
         println!("cargo:rustc-link-arg=--hip-link");
     }
 
@@ -27,12 +27,12 @@ fn main() {
     generate_bindings(&hip_include_path);
 
     // Compile native code
-    compile_native_code(&hip_include_path);
+    //compile_native_code(&hip_include_path);
 }
 
 fn generate_bindings(hip_include_path: &str) {
     let bindings = bindgen::Builder::default()
-        .header("src/bindings/wrapper.hpp")
+        .header("src/hip_sys/wrapper.hpp")
         .clang_arg(&format!("-I{}", hip_include_path))
         .clang_arg("-D__HIP_PLATFORM_AMD__")
         // Blocklist problematic items
@@ -60,20 +60,20 @@ fn generate_bindings(hip_include_path: &str) {
         .expect("Unable to generate bindings");
 
     // Write bindings to file
-    let out_path = PathBuf::from("src/bindings");
+    let out_path = PathBuf::from("src/hip_sys");
     bindings
-        .write_to_file(out_path.join("bindings.rs"))
+        .write_to_file(out_path.join("hip_sys.rs"))
         .expect("Couldn't write bindings!");
 }
 
-fn compile_native_code(hip_include_path: &str) {
-    cc::Build::new()
-        .cpp(true)
-        .include(hip_include_path)
-        .define("__HIP_PLATFORM_AMD__", None)
-        .compiler("hipcc")
-        .flag("-x")
-        .flag("hip")
-        .file("src/bindings/native.cpp")
-        .compile("native");
-}
+// fn compile_native_code(hip_include_path: &str) {
+//     cc::Build::new()
+//         .cpp(true)
+//         .include(hip_include_path)
+//         .define("__HIP_PLATFORM_AMD__", None)
+//         .compiler("hipcc")
+//         .flag("-x")
+//         .flag("hip")
+//         .file("src/bindings/native.cpp")
+//         .compile("native");
+// }
