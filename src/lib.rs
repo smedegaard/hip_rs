@@ -2,10 +2,10 @@
 #![allow(non_camel_case_types)]
 #![allow(non_snake_case)]
 
-mod bindings;
+mod hip_sys;
 
 pub fn initialize() -> Result<(), i32> {
-    let result = unsafe { bindings::hip_initialize() };
+    let result = unsafe { hip_sys::hipInit() };
     if result != 0 {
         // hipSuccess is 0
         // Convert hipError_t (u32) to i32
@@ -16,7 +16,7 @@ pub fn initialize() -> Result<(), i32> {
 
 pub fn get_device_count() -> Result<i32, i32> {
     let mut count = 0;
-    let result = unsafe { bindings::hip_get_device_count(&mut count) };
+    let result = unsafe { hip_sys::hipGetDeviceCount(&mut count) };
     if result != 0 {
         return Err(result.try_into().unwrap());
     }

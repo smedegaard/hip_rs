@@ -5,5 +5,5 @@
 
 include!(concat!(
     env!("CARGO_MANIFEST_DIR"),
-    "/src/bindings/bindings.rs"
+    "/src/hip_sys/hip_sys.rs"
 ));
