@@ -74,9 +74,8 @@ fn compile_native_code(hip_include_path: &str) {
         .compiler("hipcc")
         .flag("-x")
         .flag("hip")
-        .flag("-fgpu-rdc")
+        .flag_if_supported("-fgpu-rdc")
         // Optional: Add debug/release-specific flags
-        .flag(if cfg!(debug_assertions) { "-g" } else { "-O3" })
         .file("src/bindings/native.cpp")
         .compile("native");
 }
