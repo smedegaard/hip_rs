@@ -8,13 +8,12 @@ documentation = "https://github.com/smedegaard/hip-rs"
 repository = "https://github.com/smedegaard/hip-rs"
 readme = "README.md"
 license = "MIT OR Apache-2.0"
-keywords = ["GPU", "accelerators", "AMD"]
+keywords = ["hip", "GPU", "accelerators", "AMD", "ffi"]
 build = "build.rs"
 
 [dependencies]
 # For C++ bindings
 bindgen = "0.69.1"
-cpp = "0.5.9"
 
 [build-dependencies]
 # For build script

@@ -28,7 +28,7 @@ fn main() {
 fn generate_bindings(hip_include_path: &str) {
     let out_path = PathBuf::from(env::var("OUT_DIR").unwrap());
     let bindings = bindgen::Builder::default()
-        .header("src/hip_sys/wrapper.hpp")
+        .header("src/hip_sys/wrapper.h")
         .clang_arg(&format!("-I{}", hip_include_path))
         .clang_arg("-D__HIP_PLATFORM_AMD__")
         // Blocklist problematic items
@@ -48,10 +48,6 @@ fn generate_bindings(hip_include_path: &str) {
         .derive_default(true)
         .derive_eq(true)
         .derive_hash(true)
-        .trust_clang_mangling(false)
-        // Handle C++
-        .clang_arg("-x")
-        .clang_arg("c++")
         .generate()
         .expect("Unable to generate bindings");
 
