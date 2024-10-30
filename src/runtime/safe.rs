@@ -1,4 +1,4 @@
-use super::result::{HipError, HipResult, Result};
+use super::result::{HipError, HipErrorKind, HipResult, Result};
 use super::sys;
 use crate::types::Device;
 
