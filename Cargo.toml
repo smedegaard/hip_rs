@@ -8,13 +8,7 @@ documentation = "https://github.com/smedegaard/hip-rs"
 repository = "https://github.com/smedegaard/hip-rs"
 readme = "README.md"
 license = "MIT OR Apache-2.0"
-keywords = [
-    "GPU",
-    "accelerators",
-    "AMD",
-    "machine-learning",
-    "artificial-intelligence",
-]
+keywords = ["GPU", "accelerators", "AMD"]
 build = "build.rs"
 
 [dependencies]
