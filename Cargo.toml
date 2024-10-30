@@ -12,10 +12,7 @@ keywords = [
     "GPU",
     "accelerators",
     "AMD",
-    "Radeon",
-    "ML",
     "machine learning",
-    "AI",
     "artificial intelligence",
 ]
 build = "build.rs"
