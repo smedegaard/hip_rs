@@ -2,6 +2,23 @@
 name = "hip-rs"
 version = "0.1.0"
 edition = "2021"
+authors = ["Anders Smedegaard Pedersen <anders@smedegaard.io>"]
+description = "A Rust wrapper for AMD's Heterogeneous-computing Interface for Portability (HIP), used for GPU interop."
+documentation = "https://github.com/smedegaard/hip-rs"
+repository = "https://github.com/smedegaard/hip-rs"
+readme = "README.md"
+license = "MIT OR Apache-2.0"
+keywords = [
+    "GPU",
+    "accelerators",
+    "AMD",
+    "Radeon",
+    "ML",
+    "machine learning",
+    "AI",
+    "artificial intelligence",
+]
+build = "build.rs"
 
 [dependencies]
 # For C++ bindings
