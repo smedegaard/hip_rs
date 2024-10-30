@@ -2,7 +2,9 @@
 #![allow(non_camel_case_types)]
 #![allow(non_snake_case)]
 
-mod hip_sys;
+mod hip_sys {
+    include!(concat!(env!("OUT_DIR"), "/hip_sys.rs"));
+}
 
 pub fn initialize() -> Result<(), i32> {
     let result = unsafe { hip_sys::hipInit(0) };

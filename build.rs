@@ -26,6 +26,7 @@ fn main() {
 }
 
 fn generate_bindings(hip_include_path: &str) {
+    let out_path = PathBuf::from(env::var("OUT_DIR").unwrap());
     let bindings = bindgen::Builder::default()
         .header("src/hip_sys/wrapper.hpp")
         .clang_arg(&format!("-I{}", hip_include_path))
@@ -55,7 +56,6 @@ fn generate_bindings(hip_include_path: &str) {
         .expect("Unable to generate bindings");
 
     // Write bindings to file
-    let out_path = PathBuf::from("src/hip_sys");
     bindings
         .write_to_file(out_path.join("hip_sys.rs"))
         .expect("Couldn't write bindings!");
