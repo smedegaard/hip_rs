@@ -2,7 +2,7 @@ use std::fmt;
 
 /// Error codes from HIP runtime
 /// https://rocm.docs.amd.com/projects/HIP/en/latest/doxygen/html/hip__runtime__api_8h.html#a657deda9809cdddcbfcd336a29894635
-#[repr(i32)]
+#[repr(u32)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum HipErrorKind {
     Success = 0,
@@ -16,7 +16,7 @@ pub enum HipErrorKind {
 
 impl HipErrorKind {
     /// Convert from raw HIP error code to HipErrorKind
-    pub fn from_raw(error: i32) -> Self {
+    pub fn from_raw(error: u32) -> Self {
         match error {
             0 => HipErrorKind::Success,
             1 => HipErrorKind::InvalidValue,
@@ -31,11 +31,11 @@ impl HipErrorKind {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct HipError {
     pub kind: HipErrorKind,
-    pub code: i32,
+    pub code: u32,
 }
 
 impl HipError {
-    pub fn new(code: i32) -> Self {
+    pub fn new(code: u32) -> Self {
         Self {
             kind: HipErrorKind::from_raw(code),
             code,
@@ -63,7 +63,7 @@ pub trait HipResult {
 }
 
 /// Implement for tuple of (value, error_code)
-impl<T> HipResult for (T, i32) {
+impl<T> HipResult for (T, u32) {
     type Value = T;
 
     fn to_result(self) -> Result<T> {

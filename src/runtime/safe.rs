@@ -51,13 +51,13 @@ pub fn get_device_count() -> Result<i32> {
 /// * The device is invalid (`HipErrorKind::InvalidDevice`)
 /// * The device does not support temperature monitoring (`HipErrorKind::InvalidValue`)
 /// * HIP runtime is not initialized (`HipErrorKind::NotInitialized`)
-pub fn get_device_temperature(device: Device) -> Result<i32> {
-    unsafe {
-        let mut temp = 0;
-        let code = sys::hipDeviceGetTemperature(&mut temp, device.0);
-        (temp, code).to_result()
-    }
-}
+// pub fn get_device_temperature(device: Device) -> Result<i32> {
+//     unsafe {
+//         let mut temp = 0;
+//         let code = sys::hipDeviceGetTemperature(&mut temp, device.0);
+//         (temp, code).to_result()
+//     }
+// }
 
 #[cfg(test)]
 mod tests {
@@ -75,6 +75,12 @@ mod tests {
         if let Err(err) = result {
             assert_eq!(err.kind, HipErrorKind::DeviceAlreadyInUse);
         }
+    }
+
+    #[test]
+    fn test_error_types() {
+        // Verify that the error types match
+        let _: u32 = unsafe { sys::hipInit(0) }; // Should compile fine
     }
 
     #[test]
