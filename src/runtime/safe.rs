@@ -64,10 +64,9 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_initialization_sequence() {
+    fn test_initialization() {
         // First initialization should succeed
-        let result = initialize().expect("Failed to initialize HIP");
-
+        let result = initialize();
         assert!(result.is_ok());
     }
 
