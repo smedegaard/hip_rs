@@ -86,42 +86,6 @@ pub fn set_device(device: Device) -> Result<()> {
 mod tests {
     use super::*;
 
-    // Mock the HIP runtime functions
-    mod sys {
-        pub unsafe fn hipInit(_flags: u32) -> u32 {
-            static mut INITIALIZED: bool = false;
-            if INITIALIZED {
-                return 2; // NotInitialized error
-            }
-            INITIALIZED = true;
-            0 // Success
-        }
-
-        pub unsafe fn hipGetDeviceCount(count: *mut i32) -> u32 {
-            if count.is_null() {
-                return 1; // InvalidValue
-            }
-            *count = 2; // Mock 2 devices
-            0 // Success
-        }
-
-        pub unsafe fn hipGetDevice(device: *mut i32) -> u32 {
-            if device.is_null() {
-                return 1; // InvalidValue
-            }
-            *device = 0; // Set to device 0
-            0 // Success
-        }
-
-        pub unsafe fn hipSetDevice(device: i32) -> u32 {
-            if device >= 2 {
-                // Mock device count of 2
-                return 101; // InvalidDevice
-            }
-            0 // Success
-        }
-    }
-
     #[test]
     fn test_initialize() {
         // Test success case
@@ -139,15 +103,9 @@ mod tests {
         // Test success case
         let result = get_device_count();
         assert!(result.is_ok());
-        assert_eq!(result.unwrap(), 2);
-
-        // Test error case by creating invalid pointer scenario
-        unsafe {
-            // Override hipGetDeviceCount to simulate error
-            let result = get_device_count();
-            assert!(result.is_err());
-            assert_eq!(result.unwrap_err().kind, HipErrorKind::InvalidValue);
-        }
+        let count = result.unwrap();
+        println!("Found {} devices", count);
+        assert!(count > 0);
     }
 
     #[test]
@@ -156,21 +114,14 @@ mod tests {
         let result = get_device();
         assert!(result.is_ok());
         let device = result.unwrap();
-        assert_eq!(device.id(), 0);
-
-        // Test error case
-        unsafe {
-            // Override hipGetDevice to simulate error
-            let result = get_device();
-            assert!(result.is_err());
-            assert_eq!(result.unwrap_err().kind, HipErrorKind::InvalidValue);
-        }
+        println!("Device {} is currently active", device.id);
+        assert_eq!(device.id, 0);
     }
 
     #[test]
     fn test_set_device() {
         // Test success case with valid device
-        let device = Device::new(0);
+        let device = Device::new(1);
         let result = set_device(device);
         assert!(result.is_ok());
 
