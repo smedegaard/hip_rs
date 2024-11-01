@@ -87,15 +87,19 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_initialize() {
-        // Test success case
+    fn test_initialize_error() {
         let result = initialize();
-        assert!(result.is_ok());
-
         // Test error case (already initialized)
         let result = initialize();
         assert!(result.is_err());
         assert_eq!(result.unwrap_err().kind, HipErrorKind::NotInitialized);
+    }
+
+    #[test]
+    fn test_initialize() {
+        // Test success case
+        let result = initialize();
+        assert!(result.is_ok());
     }
 
     #[test]
