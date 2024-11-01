@@ -75,10 +75,10 @@ pub fn get_device() -> Result<Device> {
 /// * The device ID is invalid (greater than or equal to device count)
 /// * The HIP runtime is not initialized
 /// * The specified device has encountered a previous error and is in a broken state
-pub fn set_device(device: Device) -> Result<()> {
+pub fn set_device(device: Device) -> Result<Device> {
     unsafe {
         let code = sys::hipSetDevice(device.id);
-        ((), code).to_result()
+        (device, code).to_result()
     }
 }
 
@@ -128,7 +128,11 @@ mod tests {
         let device = Device::new(1);
         let result = set_device(device);
         assert!(result.is_ok());
+        assert_eq!(result.unwrap().id(), 1)
+    }
 
+    #[test]
+    fn test_set_invalid_device() {
         // Test error case with invalid device
         let invalid_device = Device::new(99);
         let result = set_device(invalid_device);
