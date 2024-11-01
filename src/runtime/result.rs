@@ -74,7 +74,7 @@ pub trait HipResult {
 }
 
 /// Implement for tuple of (value, error_code)
-impl<T> HipResult for (T, i32) {
+impl<T> HipResult for (T, u32) {
     type Value = T;
 
     fn to_result(self) -> Result<T> {
