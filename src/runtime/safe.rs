@@ -24,13 +24,13 @@ pub fn initialize() -> Result<()> {
 /// Get the number of available HIP devices.
 ///
 /// # Returns
-/// * `Result<i32>` - The number of devices if successful
+/// * `Result<u32>` - The number of devices if successful
 ///
 /// # Errors
 /// Returns `HipError` if:
 /// * The runtime is not initialized (`HipErrorKind::NotInitialized`)
 /// * The operation fails for other reasons
-pub fn get_device_count() -> Result<i32, HipError> {
+pub fn get_device_count() -> Result<u32, HipError> {
     unsafe {
         let mut count = 0;
         let code = sys::hipGetDeviceCount(&mut count);
@@ -54,10 +54,7 @@ pub fn get_device() -> Result<Device, HipError> {
     unsafe {
         let mut device_id: u32 = -1;
         let code = sys::hipGetDevice(&mut device_id);
-        match code {
-            0 => (Device::new(device_id), code).to_result(),
-            _ => (code, code).to_result(),
-        }
+        (Device::new(device_id), code).to_result()
     }
 }
 
@@ -122,7 +119,7 @@ mod tests {
         // Should be Ok since we're running on a system with HIP initialized
         assert!(result.is_ok(), "Expected Ok result, got {:?}", result);
 
-        let device = result.unwrap();
+        let device = result;
 
         // Verify device ID is valid (non-negative)
         assert!(
