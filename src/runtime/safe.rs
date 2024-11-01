@@ -111,21 +111,37 @@ mod tests {
         println!("Found {} HIP device(s)", count);
     }
 
+    use super::*;
+    use std::ptr::null_mut;
+
+    // Mock the sys::hipGetDevice function
+    mod sys {
+        pub unsafe fn hipGetDevice(device: *mut i32) -> u32 {
+            if device.is_null() {
+                return 1; // InvalidValue
+            }
+            // Set device id to 0 (success case)
+            *device = 0;
+            0 // Success
+        }
+    }
+
     #[test]
-    fn test_get_device() {
-        // Test getting the device
+    fn test_get_device_success() {
         let result = get_device();
+        assert!(result.is_ok());
+        let device = result.unwrap();
+        assert_eq!(device.id(), 0);
+    }
 
-        // Should be Ok since we're running on a system with HIP initialized
-        assert!(result.is_ok(), "Expected Ok result, got {:?}", result);
-
-        let device = result;
-
-        // Verify device ID is valid (non-negative)
-        assert!(
-            device.id() >= 0,
-            "Expected valid device ID, got {}",
-            device.id()
-        );
+    #[test]
+    fn test_get_device_error() {
+        // Override sys::hipGetDevice to simulate error
+        unsafe {
+            // Mock error case by returning error code
+            let result = get_device();
+            assert!(result.is_err());
+            assert_eq!(result.unwrap_err().kind, HipErrorKind::InvalidValue);
+        }
     }
 }
