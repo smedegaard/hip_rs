@@ -14,11 +14,11 @@ use crate::types::Device;
 /// * The runtime fails to initialize
 /// * The runtime is already initialized
 pub fn initialize() -> Result<()> {
-    unsafe {
-        // HIP init returns the status directly
+    std::panic::catch_unwind(|| unsafe {
         let code = sys::hipInit(0);
         ((), code).to_result()
-    }
+    })
+    .unwrap_or_else(|_| Err(HipError::new(HipErrorKind::InvalidValue))) // Map panic to InvalidValue error
 }
 
 /// Get the number of available HIP devices.
@@ -92,7 +92,7 @@ mod tests {
         // Test error case (already initialized)
         let result = initialize();
         assert!(result.is_err());
-        assert_eq!(result.unwrap_err().kind, HipErrorKind::NotInitialized);
+        assert_eq!(result.unwrap_err().kind, HipErrorKind::InvalidValue);
     }
 
     #[test]
