@@ -52,6 +52,13 @@ impl HipError {
             code,
         }
     }
+
+    pub fn from_kind(kind: HipErrorKind) -> Self {
+        Self {
+            kind,
+            code: kind as u32,
+        }
+    }
 }
 
 impl fmt::Display for HipError {
