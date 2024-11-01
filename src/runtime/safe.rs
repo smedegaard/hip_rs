@@ -52,7 +52,7 @@ pub fn get_device_count() -> Result<u32, HipError> {
 /// * There was an error accessing device information
 pub fn get_device() -> Result<Device, HipError> {
     unsafe {
-        let mut device_id: u32 = -1;
+        let mut device_id: i32 = -1;
         let code = sys::hipGetDevice(&mut device_id);
         (Device::new(device_id), code).to_result()
     }
