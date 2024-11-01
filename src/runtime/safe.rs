@@ -30,7 +30,7 @@ pub fn initialize() -> Result<()> {
 /// Returns `HipError` if:
 /// * The runtime is not initialized (`HipErrorKind::NotInitialized`)
 /// * The operation fails for other reasons
-pub fn get_device_count() -> Result<i32> {
+pub fn get_device_count() -> Result<i32, HipError> {
     unsafe {
         let mut count = 0;
         let code = sys::hipGetDeviceCount(&mut count);
@@ -50,13 +50,13 @@ pub fn get_device_count() -> Result<i32> {
 /// * No device is currently active
 /// * HIP runtime is not initialized
 /// * There was an error accessing device information
-pub fn get_device() -> Result<Device> {
+pub fn get_device() -> Result<Device, HipError> {
     unsafe {
-        let mut device_id: i32 = -1;
+        let mut device_id: u32 = -1;
         let code = sys::hipGetDevice(&mut device_id);
         match code {
-            0 => (Device::new(device_id.unwrap()), code).to_result(),
-            _ => ((), code).to_result(),
+            0 => (Device::new(device_id), code).to_result(),
+            _ => (code, code).to_result(),
         }
     }
 }
