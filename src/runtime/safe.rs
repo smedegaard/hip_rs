@@ -18,7 +18,7 @@ pub fn initialize() -> Result<()> {
         let code = sys::hipInit(0);
         ((), code).to_result()
     })
-    .unwrap_or_else(|_| Err(HipError::new(HipErrorKind::InvalidValue))) // Map panic to InvalidValue error
+    .unwrap_or_else(|_| Err(HipError::from_kind(HipErrorKind::InvalidValue))) // Map panic to InvalidValue error
 }
 
 /// Get the number of available HIP devices.
