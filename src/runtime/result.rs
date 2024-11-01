@@ -10,7 +10,7 @@ pub enum HipErrorKind {
     NotInitialized = 2,
     DeviceAlreadyInUse = 3,
     // Add other error codes as needed
-    InvalidDevice = 400,
+    InvalidDevice = 101,
     Unknown = 999,
 }
 
@@ -22,7 +22,7 @@ impl HipErrorKind {
             1 => HipErrorKind::InvalidValue,
             2 => HipErrorKind::NotInitialized,
             3 => HipErrorKind::DeviceAlreadyInUse,
-            400 => HipErrorKind::InvalidDevice,
+            101 => HipErrorKind::InvalidDevice,
             _ => HipErrorKind::Unknown,
         }
     }

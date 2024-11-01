@@ -38,26 +38,50 @@ pub fn get_device_count() -> Result<i32> {
     }
 }
 
-/// Gets the current temperature of the device in degrees Celsius.
-///
-/// # Arguments
-/// * `device` - The HIP device to query
+/// Gets the currently active device.
 ///
 /// # Returns
-/// * `Result<i32>` - The temperature in degrees Celsius if successful
+/// * `Result<Device>` - The currently active device if successful
 ///
 /// # Errors
 /// Returns `HipError` if:
-/// * The device is invalid (`HipErrorKind::InvalidDevice`)
-/// * The device does not support temperature monitoring (`HipErrorKind::InvalidValue`)
-/// * HIP runtime is not initialized (`HipErrorKind::NotInitialized`)
-// pub fn get_device_temperature(device: Device) -> Result<i32> {
-//     unsafe {
-//         let mut temp = 0;
-//         let code = sys::hipDeviceGetTemperature(&mut temp, device.0);
-//         (temp, code).to_result()
-//     }
-// }
+/// * HIP runtime is not initialized
+/// * No device is currently active
+pub fn get_device() -> Result<Device> {
+    unsafe {
+        let mut device_id = -1;
+        let code = sys::hipGetDevice(&mut device_id);
+        match HipErrorKind::from_raw(code) {
+            Hip
+        }
+        (Device::new(device_id), code).to_result()
+    }
+}
+
+/// Sets the active HIP device for the current host thread.
+///
+/// This function makes the specified device active for all subsequent HIP operations
+/// in the current host thread. Other host threads are not affected.
+///
+/// # Arguments
+/// * `device` - The device to make active
+///
+/// # Returns
+/// * `Ok(())` if the device was successfully made active
+/// * `Err(HipError)` if the operation failed
+///
+/// # Errors
+/// Returns `HipError` if:
+/// * The device ID is invalid (greater than or equal to device count)
+/// * The HIP runtime is not initialized
+/// * The specified device has encountered a previous error and is in a broken state
+pub fn set_device(device: Device) -> Result<()> {
+    unsafe {
+        let code = sys::hipSetDevice(device.id);
+        ((), code).to_result()
+    }
+}
+
 
 #[cfg(test)]
 mod tests {
@@ -87,47 +111,45 @@ mod tests {
         println!("Found {} HIP device(s)", count);
     }
 
-    // #[test]
-    // fn test_device_count_without_init() {
-    //     // Reset HIP state
-    //     unsafe { sys::hipDeviceReset() };
+    #[cfg(test)]
+mod tests {
+    use super::*;
 
-    //     // Try to get device count without initialization
-    //     let result = get_device_count();
+    #[test]
+    fn test_get_device() {
+        // Initialize HIP runtime first (assuming there's an init function)
+        // hip_init().expect("Failed to initialize HIP runtime");
 
-    //     assert!(result.is_err());
-    //     if let Err(err) = result {
-    //         assert_eq!(err.kind, HipErrorKind::NotInitialized);
-    //         println!("Expected error: {}", err);
-    //     }
-    // }
+        // Get current device
+        let result = get_device();
 
-    // #[test]
-    // fn test_temperature() {
-    //     // Initialize and get first device
-    //     initialize().expect("Failed to initialize HIP");
-    //     let count = get_device_count().expect("Failed to get device count");
-    //     assert!(count > 0, "No HIP devices found");
+        // Test should pass if we can get a valid device
+        assert!(result.is_ok(), "Failed to get current device");
 
-    //     // Get temperature of first device
-    //     let device = Device(0);
-    //     let temp = get_device_temperature(device).expect("Failed to get temperature");
+        // Device ID should be valid (non-negative)
+        let device = result.unwrap();
+        assert!(device.id >= 0, "Invalid device ID received");
+    }
 
-    //     println!("Device temperature: {}°C", temp);
-    //     assert!(temp >= 0 && temp < 150, "Temperature out of reasonable range");
-    // }
+    #[test]
+    fn test_set_device() {
+        // Initialize HIP runtime first (assuming there's an init function)
+        // hip_init().expect("Failed to initialize HIP runtime");
 
-    // #[test]
-    // fn test_temperature_invalid_device() {
-    //     initialize().expect("Failed to initialize HIP");
+        // Get number of devices (assuming there's a get_device_count function)
+        // let device_count = get_device_count().expect("Failed to get device count");
 
-    //     let invalid_device = Device(9999);
-    //     let result = get_device_temperature(invalid_device);
+        // Try to set device 0 (assuming at least one device exists)
+        let device = Device::new(0);
+        let result = set_device(device);
 
-    //     assert!(result.is_err());
-    //     if let Err(err) = result {
-    //         assert_eq!(err.kind, HipErrorKind::InvalidDevice);
-    //         println!("Expected error: {}", err);
-    //     }
-    // }
+        // Test should pass if we can set the device successfully
+        assert!(result.is_ok(), "Failed to set device to 0");
+
+        // Verify the device was actually set by getting current device
+        let current_device = get_device().expect("Failed to get current device");
+        assert_eq!(current_device.id, 0, "Device was not set correctly");
+    }
+}
+
 }

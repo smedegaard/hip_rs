@@ -3,7 +3,7 @@ use std::path::PathBuf;
 
 fn main() {
     // Tell cargo when to rerun this build script
-    println!("cargo:rerun-if-changed=src/runtime/wrapper.hpp");
+    println!("cargo:rerun-if-changed=src/runtime/wrapper.h");
     println!("cargo:rerun-if-changed=build.rs");
 
     // Set up HIP paths - making them configurable via environment variables
