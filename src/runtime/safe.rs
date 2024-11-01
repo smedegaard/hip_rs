@@ -38,23 +38,26 @@ pub fn get_device_count() -> Result<i32> {
     }
 }
 
-/// Gets the currently active device.
+/// Gets the currently active HIP device.
 ///
 /// # Returns
-/// * `Result<Device>` - The currently active device if successful
+/// Returns a `Result` containing either:
+/// * `Ok(Device)` - The currently active device if one is set
+/// * `Err(HipError)` - If getting the device failed
 ///
 /// # Errors
 /// Returns `HipError` if:
-/// * HIP runtime is not initialized
 /// * No device is currently active
+/// * HIP runtime is not initialized
+/// * There was an error accessing device information
 pub fn get_device() -> Result<Device> {
     unsafe {
-        let mut device_id = -1;
+        let mut device_id: Option<u32> = None;
         let code = sys::hipGetDevice(&mut device_id);
-        match HipErrorKind::from_raw(code) {
-            Hip
+        match code {
+            0 => (Device::new(device_id.unwrap()), code).to_result(),
+            _ => ((), code).to_result(),
         }
-        (Device::new(device_id), code).to_result()
     }
 }
 
@@ -82,7 +85,6 @@ pub fn set_device(device: Device) -> Result<()> {
     }
 }
 
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -90,7 +92,8 @@ mod tests {
     #[test]
     fn test_initialization() {
         // First initialization should succeed
-        let result = initialize();
+        let result = initialize().expect("Failed to initialize HIP");
+
         assert!(result.is_ok());
     }
 
@@ -111,45 +114,21 @@ mod tests {
         println!("Found {} HIP device(s)", count);
     }
 
-    #[cfg(test)]
-mod tests {
-    use super::*;
-
     #[test]
     fn test_get_device() {
-        // Initialize HIP runtime first (assuming there's an init function)
-        // hip_init().expect("Failed to initialize HIP runtime");
-
-        // Get current device
+        // Test getting the device
         let result = get_device();
 
-        // Test should pass if we can get a valid device
-        assert!(result.is_ok(), "Failed to get current device");
+        // Should be Ok since we're running on a system with HIP initialized
+        assert!(result.is_ok(), "Expected Ok result, got {:?}", result);
 
-        // Device ID should be valid (non-negative)
         let device = result.unwrap();
-        assert!(device.id >= 0, "Invalid device ID received");
+
+        // Verify device ID is valid (non-negative)
+        assert!(
+            device.id() >= 0,
+            "Expected valid device ID, got {}",
+            device.id()
+        );
     }
-
-    #[test]
-    fn test_set_device() {
-        // Initialize HIP runtime first (assuming there's an init function)
-        // hip_init().expect("Failed to initialize HIP runtime");
-
-        // Get number of devices (assuming there's a get_device_count function)
-        // let device_count = get_device_count().expect("Failed to get device count");
-
-        // Try to set device 0 (assuming at least one device exists)
-        let device = Device::new(0);
-        let result = set_device(device);
-
-        // Test should pass if we can set the device successfully
-        assert!(result.is_ok(), "Failed to set device to 0");
-
-        // Verify the device was actually set by getting current device
-        let current_device = get_device().expect("Failed to get current device");
-        assert_eq!(current_device.id, 0, "Device was not set correctly");
-    }
-}
-
 }

@@ -1,11 +1,23 @@
 use std::fmt;
 
+/// Success code from HIP runtime
+#[repr(u32)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum HipSuccess {
+    Success = 0,
+}
+
+impl HipSuccess {
+    pub fn new() -> Self {
+        Self::Success
+    }
+}
+
 /// Error codes from HIP runtime
 /// https://rocm.docs.amd.com/projects/HIP/en/latest/doxygen/html/hip__runtime__api_8h.html#a657deda9809cdddcbfcd336a29894635
 #[repr(u32)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum HipErrorKind {
-    Success = 0,
     InvalidValue = 1,
     NotInitialized = 2,
     DeviceAlreadyInUse = 3,
@@ -18,7 +30,6 @@ impl HipErrorKind {
     /// Convert from raw HIP error code to HipErrorKind
     pub fn from_raw(error: u32) -> Self {
         match error {
-            0 => HipErrorKind::Success,
             1 => HipErrorKind::InvalidValue,
             2 => HipErrorKind::NotInitialized,
             3 => HipErrorKind::DeviceAlreadyInUse,
