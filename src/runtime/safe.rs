@@ -88,7 +88,7 @@ mod tests {
 
     #[test]
     fn test_initialize_error() {
-        let result = initialize();
+        initialize();
         // Test error case (already initialized)
         let result = initialize();
         assert!(result.is_err());
