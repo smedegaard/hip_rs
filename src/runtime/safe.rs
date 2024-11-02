@@ -1,6 +1,6 @@
-use super::result::{HipError, HipErrorKind, HipResult, HipSuccess, Result};
+use super::result::{HipError, HipErrorKind, HipResult, Result};
 use super::sys;
-use crate::types::{Device, Version};
+use crate::types::Device;
 use semver::Version;
 
 /// Initialize the HIP runtime.
@@ -83,18 +83,25 @@ pub fn set_device(device: Device) -> Result<Device> {
     }
 }
 
+/// Gets the compute capability version of a HIP device.
+///
+/// This function retrieves the major and minor version numbers that specify the compute capability
+/// of the given HIP device. Compute capability indicates the technical specifications and features
+/// supported by the device's architecture.
+///
+/// # Arguments
+/// * `device` - A `Device` instance representing the HIP device to query
+///
+/// # Returns
+/// * `Result<Version>` - On success, returns a `Version` struct containing the major and minor version
+///   numbers of the device's compute capability. On failure, returns an error indicating what went wrong.
 pub fn get_device_compute_capability(device: Device) -> Result<Version> {
     unsafe {
         let mut major: i32 = -1;
         let mut minor: i32 = -1;
         let code = sys::hipDeviceComputeCapability(&mut major, &mut minor, device.id);
-        match code {
-            HipSuccess::Success => {
-                let version = Version::new(major as u64, minor as u64, 0);
-                (version, code).to_result()
-            }
-            _ => ((), code).to_result(),
-        }
+        let version = Version::new(major as u64, minor as u64, 0);
+        (version, code).to_result()
     }
 }
 
@@ -106,7 +113,8 @@ mod tests {
     fn test_get_device_compute_capability() {
         let device = Device::new(0);
         let result = get_device_compute_capability(device);
-        assert!(result.is_ok());
+        let version = result.unwrap();
+        println!("Compute Capability: {}.{}", version.major, version.minor);
     }
 
     #[test]
