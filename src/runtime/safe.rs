@@ -95,7 +95,7 @@ pub fn set_device(device: Device) -> Result<Device> {
 /// # Returns
 /// * `Result<Version>` - On success, returns a `Version` struct containing the major and minor version
 ///   numbers of the device's compute capability. On failure, returns an error indicating what went wrong.
-pub fn get_device_compute_capability(device: Device) -> Result<Version> {
+pub fn device_compute_capability(device: Device) -> Result<Version> {
     unsafe {
         let mut major: i32 = -1;
         let mut minor: i32 = -1;
@@ -105,15 +105,34 @@ pub fn get_device_compute_capability(device: Device) -> Result<Version> {
     }
 }
 
+pub fn device_total_mem(device: Device) -> Result<u64> {
+    unsafe {
+        let mut size: u64 = 0;
+        let code = sys::hipDeviceTotalMem(&size, device.id);
+        (size, code).to_result()
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
 
     #[test]
+    fn test_device_total_mem() {
+        let device = Device::new(0);
+        let result = device_total_mem(device);
+        assert!(result.is_ok());
+        let size = result.unwrap();
+        assert!(size > 0);
+    }
+
+    #[test]
     fn test_get_device_compute_capability() {
         let device = Device::new(0);
-        let result = get_device_compute_capability(device);
+        let result = device_compute_capability(device);
+        assert!(result.is_ok());
         let version = result.unwrap();
+        assert!(version.major > 0);
         println!("Compute Capability: {}.{}", version.major, version.minor);
     }
 
