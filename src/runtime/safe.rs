@@ -1,6 +1,6 @@
 use super::result::{HipError, HipErrorKind, HipResult, Result};
 use super::sys;
-use crate::types::Device;
+use crate::types::{Device, Version};
 
 /// Initialize the HIP runtime.
 ///
@@ -82,9 +82,25 @@ pub fn set_device(device: Device) -> Result<Device> {
     }
 }
 
+pub fn get_device_compute_capability(device: Device) -> Result<Version> {
+    unsafe {
+        let mut major: u32 = -1;
+        let mut minor: u32 = -1;
+        let code = sys::hipDeviceComputeCapability(&mut major, &mut minor, device.id);
+        (Version::major_minor(major, minor), code).to_result()
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn test_get_device_compute_capability() {
+        let device = Device::new(0);
+        let result = get_device_compute_capability(device);
+        assert!(result.is_ok());
+    }
 
     #[test]
     fn test_initialize() {
