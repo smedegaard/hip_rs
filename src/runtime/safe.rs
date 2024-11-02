@@ -107,7 +107,7 @@ pub fn device_compute_capability(device: Device) -> Result<Version> {
 
 pub fn device_total_mem(device: Device) -> Result<u64> {
     unsafe {
-        let mut size: u64 = 0;
+        let mut size: usize = 0;
         let code = sys::hipDeviceTotalMem(&mut size, device.id);
         (size, code).to_result()
     }
