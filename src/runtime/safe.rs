@@ -113,9 +113,39 @@ pub fn device_total_mem(device: Device) -> Result<usize> {
     }
 }
 
+fn decode_hip_version(version: i32) -> Version {
+    if version == -1 {
+        return Version::new(0, 0, 0);
+    }
+    let major = version / 1_000_000;
+    let minor = (version / 1_000) % 1_000;
+    let patch = version % 1_000;
+    Version::new(major as u64, minor as u64, patch as u64)
+}
+
+pub fn runtime_get_version() -> Result<Version> {
+    unsafe {
+        let mut version: i32 = -1;
+        let code = sys::hipRuntimeGetVersion(&mut version);
+        let version = decode_hip_version(version);
+        (version, code).to_result()
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn test_runtime_get_version() {
+        let result = runtime_get_version();
+        assert!(result.is_ok());
+        let version = result.unwrap();
+        println!(
+            "Runtime version: {}.{}.{}",
+            version.major, version.minor, version.patch
+        );
+    }
 
     #[test]
     fn test_device_total_mem() {
