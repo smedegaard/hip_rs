@@ -1,6 +1,7 @@
-use super::result::{HipError, HipErrorKind, HipResult, Result};
+use super::result::{HipError, HipErrorKind, HipResult, HipSuccess, Result};
 use super::sys;
 use crate::types::{Device, Version};
+use semver::Version;
 
 /// Initialize the HIP runtime.
 ///
@@ -87,7 +88,13 @@ pub fn get_device_compute_capability(device: Device) -> Result<Version> {
         let mut major: i32 = -1;
         let mut minor: i32 = -1;
         let code = sys::hipDeviceComputeCapability(&mut major, &mut minor, device.id);
-        (Version::major_minor(major, minor), code).to_result()
+        match code {
+            HipSuccess::Success => {
+                let version = Version::new(major as u64, minor as u64, 0);
+                (version, code).to_result()
+            }
+            _ => ((), code).to_result(),
+        }
     }
 }
 

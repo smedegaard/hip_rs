@@ -14,6 +14,7 @@ build = "build.rs"
 [dependencies]
 # For C++ bindings
 bindgen = "0.69.1"
+semver = "1.0.23"
 
 [build-dependencies]
 # For build script
