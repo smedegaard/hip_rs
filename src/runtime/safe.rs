@@ -105,6 +105,18 @@ pub fn device_compute_capability(device: Device) -> Result<Version> {
     }
 }
 
+/// Returns the total amount of memory on a HIP device.
+///
+/// # Arguments
+/// * `device` - The device to query
+///
+/// # Returns
+/// * `Result<usize>` - The total memory in bytes if successful
+///
+/// # Errors
+/// Returns `HipError` if:
+/// * The device is invalid
+/// * The runtime is not initialized
 pub fn device_total_mem(device: Device) -> Result<usize> {
     unsafe {
         let mut size: usize = 0;
@@ -113,6 +125,15 @@ pub fn device_total_mem(device: Device) -> Result<usize> {
     }
 }
 
+/// Decodes a HIP version number from its internal integer representation.
+///
+/// The version is encoded as: major * 1_000_000 + minor * 1_000 + patch
+///
+/// # Arguments
+/// * `version` - The encoded version number
+///
+/// # Returns
+/// * `Version` - A semantic version with major, minor and patch components
 fn decode_hip_version(version: i32) -> Version {
     if version == -1 {
         return Version::new(0, 0, 0);
@@ -123,6 +144,15 @@ fn decode_hip_version(version: i32) -> Version {
     Version::new(major as u64, minor as u64, patch as u64)
 }
 
+/// Gets the version of the HIP runtime.
+///
+/// # Returns
+/// * `Result<Version>` - The runtime version if successful
+///
+/// # Errors
+/// Returns `HipError` if:
+/// * The runtime is not initialized
+/// * Getting the version fails
 pub fn runtime_get_version() -> Result<Version> {
     unsafe {
         let mut version: i32 = -1;
@@ -132,9 +162,38 @@ pub fn runtime_get_version() -> Result<Version> {
     }
 }
 
+pub fn device_get_name(device: Device) -> Result<String> {
+    unsafe {
+        let mut name = String::new();
+        let code = sys::hipDeviceGetName(&mut name);
+    }
+}
+
+pub fn get_device_name(device: i32) -> Result<String> {
+    // Start with a reasonably sized buffer
+    const INITIAL_BUFFER_SIZE: usize = 64;
+    let mut buffer = vec![0i8; INITIAL_BUFFER_SIZE];
+
+    unsafe {
+        let code = hipDeviceGetName(buffer.as_mut_ptr(), buffer.len() as i32, device);
+        // Convert the C string to a Rust String
+        let c_str = CStr::from_ptr(buffer.as_ptr());
+        (c_str.to_string_lossy().into_owned()).to_result()
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn test_get_device_name() {
+        let device = Device::new(0);
+        let result = get_device_name(device);
+        assert!(result.is_ok());
+        let name = result.unwrap();
+        println!("Device name: {}", name);
+    }
 
     #[test]
     fn test_runtime_get_version() {
