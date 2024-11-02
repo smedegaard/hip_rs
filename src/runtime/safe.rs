@@ -113,14 +113,14 @@ pub fn device_total_mem(device: Device) -> Result<usize> {
     }
 }
 
-fn decode_hip_version(version: i32) -> (i32, i32, i32) {
+fn decode_hip_version(version: i32) -> Version {
     if version == -1 {
-        return (0, 0, 0);
+        return Version::new(0, 0, 0);
     }
     let major = version / 1_000_000;
     let minor = (version / 1_000) % 1_000;
     let patch = version % 1_000;
-    (major, minor, patch)
+    Version::new(major as u64, minor as u64, patch as u64)
 }
 
 pub fn runtime_get_version() -> Result<Version> {
