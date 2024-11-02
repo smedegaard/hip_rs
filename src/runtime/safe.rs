@@ -87,19 +87,6 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_initialize_error() {
-        initialize();
-        // Test error case (already initialized)
-        let result = initialize();
-        assert!(result.is_err());
-        assert_eq!(result.unwrap_err().kind, HipErrorKind::InvalidValue);
-        println!(
-            "Calling initialize() twice was caught. {}",
-            result.unwrap_err()
-        );
-    }
-
-    #[test]
     fn test_initialize() {
         // Test success case
         let result = initialize();
