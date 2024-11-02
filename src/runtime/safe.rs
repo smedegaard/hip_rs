@@ -93,6 +93,10 @@ mod tests {
         let result = initialize();
         assert!(result.is_err());
         assert_eq!(result.unwrap_err().kind, HipErrorKind::InvalidValue);
+        println!(
+            "Calling initialize() twice was caught. {}",
+            result.unwrap_err()
+        );
     }
 
     #[test]
