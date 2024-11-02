@@ -41,7 +41,7 @@ impl Version {
     }
 
     // Renamed constructor for the full version number
-    pub fn major_minor_patch(major: u32, minor: u32, patch: u32) -> Self {
+    pub fn major_minor_patch(major: u32, minor: u32, patch: Option<u32>) -> Self {
         Version::new(major, minor, Some(patch))
     }
 

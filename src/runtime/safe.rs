@@ -84,8 +84,8 @@ pub fn set_device(device: Device) -> Result<Device> {
 
 pub fn get_device_compute_capability(device: Device) -> Result<Version> {
     unsafe {
-        let mut major: u32 = -1;
-        let mut minor: u32 = -1;
+        let mut major: i32 = -1;
+        let mut minor: i32 = -1;
         let code = sys::hipDeviceComputeCapability(&mut major, &mut minor, device.id);
         (Version::major_minor(major, minor), code).to_result()
     }
