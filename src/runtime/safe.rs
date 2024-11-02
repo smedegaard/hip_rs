@@ -126,7 +126,8 @@ fn decode_hip_version(version: i32) -> (i32, i32, i32) {
 pub fn runtime_get_version() -> Result<Version> {
     unsafe {
         let mut version: i32 = -1;
-        let code = sys::hipRuntimeGetVersion(&version);
+        let code = sys::hipRuntimeGetVersion(&mut version);
+        let version = decode_hip_version(version);
         (version, code).to_result()
     }
 }
