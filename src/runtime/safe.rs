@@ -124,6 +124,7 @@ mod tests {
         assert!(result.is_ok());
         let size = result.unwrap();
         assert!(size > 0);
+        println!("Total memory in bytes: {}", size);
     }
 
     #[test]
