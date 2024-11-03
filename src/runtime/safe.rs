@@ -162,13 +162,25 @@ pub fn runtime_get_version() -> Result<Version> {
     }
 }
 
-pub fn get_device_name(device: i32) -> Result<String> {
-    // Start with a reasonably sized buffer
+/// Gets the name of a HIP device.
+///
+/// # Arguments
+/// * `device` - The device ID to query
+///
+/// # Returns
+/// * `Result<String>` - The device name if successful
+///
+/// # Errors
+/// Returns `HipError` if:
+/// * The device ID is invalid
+/// * There was an error retrieving the device name
+/// * The name string could not be converted to valid UTF-8
+pub fn get_device_name(device: Device) -> Result<String> {
     const BUFFER_SIZE: usize = 64;
     let mut buffer = vec![0i8; INITIAL_BUFFER_SIZE];
 
     unsafe {
-        let code = hipDeviceGetName(buffer.as_mut_ptr(), buffer.len() as i32, device);
+        let code = sys::hipDeviceGetName(buffer.as_mut_ptr(), buffer.len() as i32, device.id);
         // Convert the C string to a Rust String
         let c_str = CStr::from_ptr(buffer.as_ptr());
         (c_str.to_string_lossy().into_owned()).to_result()
