@@ -184,7 +184,7 @@ pub fn get_device_name(device: Device) -> Result<String> {
         let code = sys::hipDeviceGetName(buffer.as_mut_ptr(), buffer.len() as i32, device.id);
         // Convert the C string to a Rust String
         let c_str = CStr::from_ptr(buffer.as_ptr());
-        (c_str.to_string_lossy().into_owned()).to_result()
+        (c_str.to_string_lossy().into_owned(), code).to_result()
     }
 }
 
