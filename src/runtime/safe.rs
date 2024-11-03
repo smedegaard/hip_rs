@@ -2,6 +2,7 @@ use super::result::{HipError, HipErrorKind, HipResult, Result};
 use super::sys;
 use crate::types::Device;
 use semver::Version;
+use std::ffi::CStr;
 
 /// Initialize the HIP runtime.
 ///
@@ -176,8 +177,8 @@ pub fn runtime_get_version() -> Result<Version> {
 /// * There was an error retrieving the device name
 /// * The name string could not be converted to valid UTF-8
 pub fn get_device_name(device: Device) -> Result<String> {
-    const BUFFER_SIZE: usize = 64;
-    let mut buffer = vec![0i8; INITIAL_BUFFER_SIZE];
+    const buffer_size: usize = 64;
+    let mut buffer = vec![0i8; buffer_size];
 
     unsafe {
         let code = sys::hipDeviceGetName(buffer.as_mut_ptr(), buffer.len() as i32, device.id);
