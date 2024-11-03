@@ -162,16 +162,9 @@ pub fn runtime_get_version() -> Result<Version> {
     }
 }
 
-pub fn device_get_name(device: Device) -> Result<String> {
-    unsafe {
-        let mut name = String::new();
-        let code = sys::hipDeviceGetName(&mut name);
-    }
-}
-
 pub fn get_device_name(device: i32) -> Result<String> {
     // Start with a reasonably sized buffer
-    const INITIAL_BUFFER_SIZE: usize = 64;
+    const BUFFER_SIZE: usize = 64;
     let mut buffer = vec![0i8; INITIAL_BUFFER_SIZE];
 
     unsafe {
