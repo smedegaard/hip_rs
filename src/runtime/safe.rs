@@ -262,7 +262,7 @@ mod tests {
         ];
 
         for attr in attributes {
-            let result = get_device_p2p_attribute(attr, device_0.id(), device_1.id());
+            let result = get_device_p2p_attribute(attr, device_0, device_1);
             assert!(result.is_ok());
             let value = result.unwrap();
             println!(
@@ -287,7 +287,7 @@ mod tests {
         ];
 
         for attr in attributes {
-            let result = get_device_p2p_attribute(attr, device.id(), device.id());
+            let result = get_device_p2p_attribute(attr, device, device);
             assert!(result.is_ok());
             let value = result.unwrap();
             println!(
@@ -302,13 +302,10 @@ mod tests {
     #[test]
     fn test_get_device_p2p_attribute_invalid_device() {
         let device = Device::new(0);
-        let invalid_device = 99;
+        let invalid_device = Device::new(99);
 
-        let result = get_device_p2p_attribute(
-            DeviceP2PAttribute::AccessSupported,
-            device.id(),
-            invalid_device,
-        );
+        let result =
+            get_device_p2p_attribute(DeviceP2PAttribute::AccessSupported, device, invalid_device);
         assert!(result.is_err());
         assert_eq!(result.unwrap_err().kind, HipErrorKind::InvalidDevice);
     }
