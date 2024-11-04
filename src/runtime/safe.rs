@@ -3,6 +3,7 @@ use super::sys;
 use crate::types::Device;
 use semver::Version;
 use std::ffi::CStr;
+use uuid::Uuid;
 
 /// Initialize the HIP runtime.
 ///
@@ -188,9 +189,71 @@ pub fn get_device_name(device: Device) -> Result<String> {
     }
 }
 
+/// Gets the UUID bytes for a HIP device.
+///
+/// # Arguments
+/// * `device` - The device to query
+///
+/// # Returns
+/// * `Result<[i8; 16]>` - The UUID as a 16-byte array if successful
+///
+/// # Errors
+/// Returns `HipError` if:
+/// * The device is invalid
+/// * The runtime is not initialized
+/// * There was an error retrieving the UUID
+pub fn get_device_uuid_bytes(device: Device) -> Result<[i8; 16]> {
+    let mut hip_bytes = sys::hipUUID_t { bytes: [0; 16] };
+    unsafe {
+        let code = sys::hipDeviceGetUuid(&mut hip_bytes, device.id);
+        (hip_bytes.bytes, code).to_result()
+    }
+}
+
+/// Gets the UUID for a HIP device.
+///
+/// Retrieves the unique identifier (UUID) for a specified HIP device,
+///
+/// # Arguments
+/// * `device` - The device to query
+///
+/// # Returns
+/// * `Result<Uuid>` - The device UUID if successful
+///
+/// # Errors
+/// Returns `HipError` if:
+/// * The device is invalid
+/// * The runtime is not initialized
+/// * There was an error retrieving the UUID
+pub fn get_device_uuid(device: Device) -> Result<Uuid> {
+    get_device_uuid_bytes(device).map(|bytes| {
+        let uuid_bytes: [u8; 16] = bytes.map(|b| b as u8);
+        Uuid::from_bytes(uuid_bytes)
+    })
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn test_get_device_uuid_bytes() {
+        let device = Device::new(0);
+        let result = get_device_uuid_bytes(device);
+        assert!(result.is_ok());
+        let uuid_bytes = result.unwrap();
+        assert_eq!(uuid_bytes.len(), 16);
+        println!("Device UUID bytes: {:?}", uuid_bytes);
+    }
+
+    #[test]
+    fn test_get_device_uuid() {
+        let device = Device::new(0);
+        let result = get_device_uuid(device);
+        assert!(result.is_ok());
+        let uuid = result.unwrap();
+        println!("Device UUID: {}", uuid);
+    }
 
     #[test]
     fn test_get_device_name() {

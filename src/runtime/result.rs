@@ -19,10 +19,11 @@ impl HipSuccess {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum HipErrorKind {
     InvalidValue = 1,
-    NotInitialized = 2,
+    ErrorMemoryAllocation = 2,
     DeviceAlreadyInUse = 3,
-    // Add other error codes as needed
+    Deinitialized = 4,
     InvalidDevice = 101,
+    FileNotFound = 301,
     Unknown = 999,
 }
 
@@ -31,9 +32,11 @@ impl HipErrorKind {
     pub fn from_raw(error: u32) -> Self {
         match error {
             1 => HipErrorKind::InvalidValue,
-            2 => HipErrorKind::NotInitialized,
+            2 => HipErrorKind::ErrorMemoryAllocation,
             3 => HipErrorKind::DeviceAlreadyInUse,
+            4 => HipErrorKind::Deinitialized,
             101 => HipErrorKind::InvalidDevice,
+            301 => HipErrorKind::FileNotFound,
             _ => HipErrorKind::Unknown,
         }
     }
