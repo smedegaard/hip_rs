@@ -254,9 +254,10 @@ mod tests {
         let device_1 = Device::new(1);
 
         let attributes = vec![
+            DeviceP2PAttribute::PerformanceRank,
             DeviceP2PAttribute::AccessSupported,
-            DeviceP2PAttribute::AtomicSupported,
-            DeviceP2PAttribute::DisableP2P,
+            DeviceP2PAttribute::NativeAtomicSupported,
+            DeviceP2PAttribute::HipArrayAccessSupported,
         ];
 
         for attr in attributes {
@@ -278,9 +279,10 @@ mod tests {
         let device = Device::new(0);
 
         let attributes = vec![
+            DeviceP2PAttribute::PerformanceRank,
             DeviceP2PAttribute::AccessSupported,
-            DeviceP2PAttribute::AtomicSupported,
-            DeviceP2PAttribute::DisableP2P,
+            DeviceP2PAttribute::NativeAtomicSupported,
+            DeviceP2PAttribute::HipArrayAccessSupported,
         ];
 
         for attr in attributes {
