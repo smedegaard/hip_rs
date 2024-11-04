@@ -125,7 +125,7 @@ impl From<DeviceP2PAttribute> for u32 {
 }
 
 impl TryFrom<u32> for DeviceP2PAttribute {
-    type Error = &'static str;
+    type Error = HipError;
 
     fn try_from(value: sys::hipDeviceP2PAttr) -> Result<Self> {
         match value {
@@ -137,7 +137,7 @@ impl TryFrom<u32> for DeviceP2PAttribute {
             sys::hipDeviceP2PAttr_hipDevP2PAttrHipArrayAccessSupported => {
                 Ok(Self::HipArrayAccessSupported)
             }
-            _ => Err("Invalid P2P attribute value"),
+            _ => HipError::from_kind(HipErrorKind::InvalidValue),
         }
     }
 }
