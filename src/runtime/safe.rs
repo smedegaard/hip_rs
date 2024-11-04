@@ -7,7 +7,8 @@ use uuid::Uuid;
 
 /// Initialize the HIP runtime.
 ///
-/// This function must be called before any other HIP functions.
+/// Most HIP APIs implicitly initialize the HIP runtime.
+/// This API provides control over the timing of the initialization.
 ///
 /// # Returns
 /// * `Result<()>` - Success or error status
@@ -17,11 +18,10 @@ use uuid::Uuid;
 /// * The runtime fails to initialize
 /// * The runtime is already initialized
 pub fn initialize() -> Result<()> {
-    std::panic::catch_unwind(|| unsafe {
+    unsafe {
         let code = sys::hipInit(0);
         ((), code).to_result()
-    })
-    .unwrap_or_else(|_| Err(HipError::from_kind(HipErrorKind::InvalidValue))) // Map panic to InvalidValue error
+    }
 }
 
 /// Get the number of available HIP devices.
@@ -202,7 +202,7 @@ pub fn get_device_name(device: Device) -> Result<String> {
 /// * The device is invalid
 /// * The runtime is not initialized
 /// * There was an error retrieving the UUID
-pub fn get_device_uuid_bytes(device: Device) -> Result<[i8; 16]> {
+fn get_device_uuid_bytes(device: Device) -> Result<[i8; 16]> {
     let mut hip_bytes = sys::hipUUID_t { bytes: [0; 16] };
     unsafe {
         let code = sys::hipDeviceGetUuid(&mut hip_bytes, device.id);
