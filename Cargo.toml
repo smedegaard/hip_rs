@@ -15,6 +15,7 @@ build = "build.rs"
 # For C++ bindings
 bindgen = "0.69.1"
 semver = "1.0.23"
+uuid = "1.11.0"
 
 [build-dependencies]
 # For build script

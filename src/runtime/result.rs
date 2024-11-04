@@ -20,9 +20,10 @@ impl HipSuccess {
 pub enum HipErrorKind {
     InvalidValue = 1,
     NotInitialized = 2,
-    DeviceAlreadyInUse = 3,
-    // Add other error codes as needed
+    NotInitialized = 3,
+    Deinitialized = 4,
     InvalidDevice = 101,
+    FileNotFound = 301,
     Unknown = 999,
 }
 

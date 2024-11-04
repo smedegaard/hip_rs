@@ -3,6 +3,7 @@ use super::sys;
 use crate::types::Device;
 use semver::Version;
 use std::ffi::CStr;
+use uuid::Uuid;
 
 /// Initialize the HIP runtime.
 ///
@@ -188,9 +189,66 @@ pub fn get_device_name(device: Device) -> Result<String> {
     }
 }
 
+/// Gets the UUID bytes for a HIP device.
+///
+/// # Arguments
+/// * `device` - The device to query
+///
+/// # Returns
+/// * `Result<[u8; 16]>` - The UUID as a 16-byte array if successful
+///
+/// # Errors
+/// Returns `HipError` if:
+/// * The device is invalid
+/// * The runtime is not initialized
+/// * There was an error retrieving the UUID
+pub fn get_device_uuid_bytes(device: Device) -> Result<[u8; 16]> {
+    let mut bytes = [u8; 16];
+    unsafe {
+        let code = sys::DeviceGetUuid(&mut bytes, device.id);
+        (bytes, code).to_result()
+    }
+}
+
+/// Gets a UUID for a HIP device.
+///
+/// # Arguments
+/// * `device` - The device to query
+///
+/// # Returns
+/// * `Result<Uuid>` - A UUID representing the device if successful
+///
+/// # Errors
+/// Returns `HipError` if:
+/// * The device is invalid
+/// * The runtime is not initialized
+/// * There was an error retrieving the UUID
+pub fn get_device_uuid(device: Device) -> Result<Uuid> {
+    get_device_uuid_bytes(device).map(Uuid::from_bytes)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn test_get_device_uuid_bytes() {
+        let device = Device::new(0);
+        let result = get_device_uuid_bytes(device);
+        assert!(result.is_ok());
+        let uuid_bytes = result.unwrap();
+        assert_eq!(uuid_bytes.len(), 16);
+        println!("Device UUID bytes: {:?}", uuid_bytes);
+    }
+
+    #[test]
+    fn test_get_device_uuid() {
+        let device = Device::new(0);
+        let result = get_device_uuid(device);
+        assert!(result.is_ok());
+        let uuid = result.unwrap();
+        println!("Device UUID: {}", uuid);
+    }
 
     #[test]
     fn test_get_device_name() {
