@@ -195,7 +195,7 @@ pub fn get_device_name(device: Device) -> Result<String> {
 /// * `device` - The device to query
 ///
 /// # Returns
-/// * `Result<[u8; 16]>` - The UUID as a 16-byte array if successful
+/// * `Result<[i8; 16]>` - The UUID as a 16-byte array if successful
 ///
 /// # Errors
 /// Returns `HipError` if:
@@ -210,13 +210,15 @@ pub fn get_device_uuid_bytes(device: Device) -> Result<[i8; 16]> {
     }
 }
 
-/// Gets a UUID for a HIP device.
+/// Gets the UUID for a HIP device.
+///
+/// Retrieves the unique identifier (UUID) for a specified HIP device,
 ///
 /// # Arguments
 /// * `device` - The device to query
 ///
 /// # Returns
-/// * `Result<Uuid>` - A UUID representing the device if successful
+/// * `Result<Uuid>` - The device UUID if successful
 ///
 /// # Errors
 /// Returns `HipError` if:
