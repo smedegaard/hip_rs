@@ -203,9 +203,9 @@ pub fn get_device_name(device: Device) -> Result<String> {
 /// * The runtime is not initialized
 /// * There was an error retrieving the UUID
 pub fn get_device_uuid_bytes(device: Device) -> Result<[u8; 16]> {
-    let mut bytes = [u8; 16];
+    let mut bytes = [0u8; 16];
     unsafe {
-        let code = sys::DeviceGetUuid(&mut bytes, device.id);
+        let code = sys::hipDeviceGetUuid(&mut bytes, device.id);
         (bytes, code).to_result()
     }
 }
