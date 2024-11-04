@@ -1,5 +1,5 @@
-use super::result::{HipError, HipErrorKind, HipResult, Result};
 use super::sys;
+use super::types::{DeviceP2PAttribute, HipError, HipErrorKind, HipResult, Result};
 use crate::types::Device;
 use semver::Version;
 use std::ffi::CStr;
