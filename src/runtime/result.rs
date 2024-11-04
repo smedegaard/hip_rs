@@ -34,7 +34,9 @@ impl HipErrorKind {
             1 => HipErrorKind::InvalidValue,
             2 => HipErrorKind::NotInitialized,
             3 => HipErrorKind::DeviceAlreadyInUse,
+            4 => HipErrorKind::Deinitialized,
             101 => HipErrorKind::InvalidDevice,
+            301 => HipErrorKind::FileNotFound,
             _ => HipErrorKind::Unknown,
         }
     }
