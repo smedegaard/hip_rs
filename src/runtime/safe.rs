@@ -202,7 +202,7 @@ pub fn get_device_name(device: Device) -> Result<String> {
 /// * The device is invalid
 /// * The runtime is not initialized
 /// * There was an error retrieving the UUID
-pub fn get_device_uuid_bytes(device: Device) -> Result<[u8; 16]> {
+pub fn get_device_uuid_bytes(device: Device) -> Result<[i8; 16]> {
     let mut hip_bytes: sys::hipUUID_t = sys::hipUUID_t { bytes: [0; 16] };
     unsafe {
         let code = sys::hipDeviceGetUuid(*hip_bytes, device.id);
