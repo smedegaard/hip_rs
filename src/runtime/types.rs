@@ -127,7 +127,7 @@ impl From<DeviceP2PAttribute> for u32 {
 impl TryFrom<u32> for DeviceP2PAttribute {
     type Error = &'static str;
 
-    fn try_from(value: hipDeviceP2PAttr) -> Result<Self, Self::Error> {
+    fn try_from(value: sys::hipDeviceP2PAttr) -> Result<Self> {
         match value {
             sys::hipDeviceP2PAttr_hipDevP2PAttrPerformanceRank => Ok(Self::PerformanceRank),
             sys::hipDeviceP2PAttr_hipDevP2PAttrAccessSupported => Ok(Self::AccessSupported),
