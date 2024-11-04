@@ -224,7 +224,10 @@ pub fn get_device_uuid_bytes(device: Device) -> Result<[i8; 16]> {
 /// * The runtime is not initialized
 /// * There was an error retrieving the UUID
 pub fn get_device_uuid(device: Device) -> Result<Uuid> {
-    get_device_uuid_bytes(device).map(Uuid::from_bytes)
+    get_device_uuid_bytes(device).map(|bytes| {
+        let uuid_bytes: [u8; 16] = bytes.map(|b| b as u8);
+        Uuid::from_bytes(uuid_bytes)
+    })
 }
 
 #[cfg(test)]
