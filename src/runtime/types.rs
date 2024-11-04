@@ -105,7 +105,7 @@ pub enum DeviceP2PAttribute {
     HipArrayAccessSupported,
 }
 
-impl From<DeviceP2PAttribute> for hipDeviceP2PAttr {
+impl From<DeviceP2PAttribute> for u32 {
     fn from(attr: DeviceP2PAttribute) -> Self {
         match attr {
             DeviceP2PAttribute::PerformanceRank => {
@@ -124,7 +124,7 @@ impl From<DeviceP2PAttribute> for hipDeviceP2PAttr {
     }
 }
 
-impl TryFrom<hipDeviceP2PAttr> for DeviceP2PAttribute {
+impl TryFrom<u32> for DeviceP2PAttribute {
     type Error = &'static str;
 
     fn try_from(value: hipDeviceP2PAttr) -> Result<Self, Self::Error> {

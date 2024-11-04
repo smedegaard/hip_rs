@@ -234,12 +234,13 @@ pub fn get_device_uuid(device: Device) -> Result<Uuid> {
 
 pub fn get_device_p2p_attribute(
     attr: DeviceP2PAttribute,
-    src_device: i32,
-    dst_device: i32,
+    src_device: Device,
+    dst_device: Device,
 ) -> Result<i32> {
     let mut value = -1;
     unsafe {
-        let code = sys::hipDeviceGetP2PAttribute(&mut value, attr.into(), src_device, dst_device);
+        let code =
+            sys::hipDeviceGetP2PAttribute(&mut value, attr.into(), src_device.id, dst_device.id);
         (value, code).to_result()
     }
 }
