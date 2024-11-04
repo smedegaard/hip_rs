@@ -232,9 +232,83 @@ pub fn get_device_uuid(device: Device) -> Result<Uuid> {
     })
 }
 
+pub fn get_device_p2p_attribute(
+    attr: DeviceP2PAttribute,
+    src_device: i32,
+    dst_device: i32,
+) -> Result<i32> {
+    let mut value = -1;
+    unsafe {
+        let code = sys::hipDeviceGetP2PAttribute(&mut value, attr.into(), src_device, dst_device);
+        (value, code).to_result()
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn test_get_device_p2p_attribute() {
+        let device_0 = Device::new(0);
+        let device_1 = Device::new(1);
+
+        let attributes = vec![
+            DeviceP2PAttribute::AccessSupported,
+            DeviceP2PAttribute::AtomicSupported,
+            DeviceP2PAttribute::DisableP2P,
+        ];
+
+        for attr in attributes {
+            let result = get_device_p2p_attribute(attr, device_0.id(), device_1.id());
+            assert!(result.is_ok());
+            let value = result.unwrap();
+            println!(
+                "{:?} attribute value between device {} and {}: {}",
+                attr,
+                device_0.id(),
+                device_1.id(),
+                value
+            );
+        }
+    }
+
+    #[test]
+    fn test_get_device_p2p_attribute_same_device() {
+        let device = Device::new(0);
+
+        let attributes = vec![
+            DeviceP2PAttribute::AccessSupported,
+            DeviceP2PAttribute::AtomicSupported,
+            DeviceP2PAttribute::DisableP2P,
+        ];
+
+        for attr in attributes {
+            let result = get_device_p2p_attribute(attr, device.id(), device.id());
+            assert!(result.is_ok());
+            let value = result.unwrap();
+            println!(
+                "{:?} attribute value for device {}: {}",
+                attr,
+                device.id(),
+                value
+            );
+        }
+    }
+
+    #[test]
+    fn test_get_device_p2p_attribute_invalid_device() {
+        let device = Device::new(0);
+        let invalid_device = 99;
+
+        let result = get_device_p2p_attribute(
+            DeviceP2PAttribute::AccessSupported,
+            device.id(),
+            invalid_device,
+        );
+        assert!(result.is_err());
+        assert_eq!(result.unwrap_err().kind, HipErrorKind::InvalidDevice);
+    }
 
     #[test]
     fn test_get_device_uuid_bytes() {
