@@ -137,7 +137,7 @@ impl TryFrom<u32> for DeviceP2PAttribute {
             sys::hipDeviceP2PAttr_hipDevP2PAttrHipArrayAccessSupported => {
                 Ok(Self::HipArrayAccessSupported)
             }
-            _ => HipError::from_kind(HipErrorKind::InvalidValue),
+            _ => Err(HipError::from_kind(HipErrorKind::InvalidValue)),
         }
     }
 }
