@@ -125,7 +125,7 @@ impl From<DeviceP2PAttribute> for u32 {
 }
 
 impl TryFrom<u32> for DeviceP2PAttribute {
-    type Error = HipError;
+    type Err = HipError;
 
     fn try_from(value: sys::hipDeviceP2PAttr) -> Result<Self> {
         match value {
