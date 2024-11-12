@@ -1,3 +1,4 @@
+use super::sys;
 use std::fmt;
 
 /// Success code from HIP runtime
@@ -92,6 +93,51 @@ impl<T> HipResult for (T, u32) {
         match code {
             0 => Ok(value),
             _ => Err(HipError::new(code)),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum DeviceP2PAttribute {
+    PerformanceRank,
+    AccessSupported,
+    NativeAtomicSupported,
+    HipArrayAccessSupported,
+}
+
+impl From<DeviceP2PAttribute> for u32 {
+    fn from(attr: DeviceP2PAttribute) -> Self {
+        match attr {
+            DeviceP2PAttribute::PerformanceRank => {
+                sys::hipDeviceP2PAttr_hipDevP2PAttrPerformanceRank
+            }
+            DeviceP2PAttribute::AccessSupported => {
+                sys::hipDeviceP2PAttr_hipDevP2PAttrAccessSupported
+            }
+            DeviceP2PAttribute::NativeAtomicSupported => {
+                sys::hipDeviceP2PAttr_hipDevP2PAttrNativeAtomicSupported
+            }
+            DeviceP2PAttribute::HipArrayAccessSupported => {
+                sys::hipDeviceP2PAttr_hipDevP2PAttrHipArrayAccessSupported
+            }
+        }
+    }
+}
+
+impl TryFrom<u32> for DeviceP2PAttribute {
+    type Error = HipError;
+
+    fn try_from(value: sys::hipDeviceP2PAttr) -> Result<Self> {
+        match value {
+            sys::hipDeviceP2PAttr_hipDevP2PAttrPerformanceRank => Ok(Self::PerformanceRank),
+            sys::hipDeviceP2PAttr_hipDevP2PAttrAccessSupported => Ok(Self::AccessSupported),
+            sys::hipDeviceP2PAttr_hipDevP2PAttrNativeAtomicSupported => {
+                Ok(Self::NativeAtomicSupported)
+            }
+            sys::hipDeviceP2PAttr_hipDevP2PAttrHipArrayAccessSupported => {
+                Ok(Self::HipArrayAccessSupported)
+            }
+            _ => Err(HipError::from_kind(HipErrorKind::InvalidValue)),
         }
     }
 }
