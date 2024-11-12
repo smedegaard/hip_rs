@@ -161,6 +161,7 @@ pub unsafe trait UnsafeToString {
 /// 1 character for period
 /// 1 character for function
 /// 1 character for null terminator
+#[derive(Debug)]
 pub struct PCIBusId(Vec<i8>);
 
 impl PCIBusId {

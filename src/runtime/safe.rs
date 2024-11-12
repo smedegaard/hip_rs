@@ -340,7 +340,7 @@ mod tests {
         let result = get_device_pci_bus_id(device);
         assert!(result.is_ok());
         let pci_id = result.unwrap();
-        println!("Device PCI Bus ID: {}", pci_id);
+        println!("Device PCI Bus ID: {:?}", pci_id);
     }
 
     #[test]
