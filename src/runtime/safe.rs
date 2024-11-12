@@ -283,7 +283,7 @@ pub fn get_device_pci_bus_id(device: Device) -> Result<PCIBusId> {
     let mut pci_bus_id = PCIBusId::new();
 
     unsafe {
-        let code = sys::hipDeviceGetPCIBusId(buffer.as_mut_ptr(), buffer.len(), device.id);
+        let code = sys::hipDeviceGetPCIBusId(pci_bus_id.as_mut_ptr(), pci_bus_id.len(), device.id);
         (pci_bus_id, code).to_result()
     }
 }
