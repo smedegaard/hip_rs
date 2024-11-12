@@ -1,8 +1,9 @@
 use super::sys;
-use super::types::{DeviceP2PAttribute, HipError, HipErrorKind, HipResult, Result};
+use super::types::{DeviceP2PAttribute, HipError, HipErrorKind, HipResult, PCIBusId, Result};
 use crate::types::Device;
 use semver::Version;
 use std::ffi::CStr;
+use std::i32;
 use uuid::Uuid;
 
 /// Initialize the HIP runtime.
@@ -278,22 +279,60 @@ pub fn get_device_p2p_attribute(
 /// * The device is invalid
 /// * The runtime is not initialized
 /// * There was an error retrieving the PCI bus ID
-pub fn get_device_get_pci_bus_id(device: Device) -> Result<String> {
-    let buffer_size = 16;
-    let mut buffer = vec![0i8; buffer_size];
+pub fn get_device_pci_bus_id(device: Device) -> Result<PCIBusId> {
+    let mut pci_bus_id = PCIBusId::new();
 
     unsafe {
-        let code = sys::hipDeviceGetPCIBusId(buffer.as_mut_ptr(), buffer.len() as i32, device.id);
-        // Convert the C string to a Rust String
-        let c_str = CStr::from_ptr(buffer.as_ptr());
-        let rust_str = c_str.to_string_lossy().into_owned();
-        (rust_str, code).to_result()
+        let code = sys::hipDeviceGetPCIBusId(buffer.as_mut_ptr(), buffer.len(), device.id);
+        (pci_bus_id, code).to_result()
+    }
+}
+
+/// Gets a HIP device by its PCI bus ID.
+///
+/// # Arguments
+/// * `pci_bus_id` - The PCI bus ID [`PCIBusId`] string identifying the device
+///
+/// # Returns
+/// * `Result<Device>` - The device if found
+///
+/// # Errors
+/// Returns `HipError` if:
+/// * The PCI bus ID string is invalid
+/// * No device with the specified PCI bus ID exists
+/// * The runtime is not initialized
+pub fn get_device_by_pci_bus_id(pci_bus_id: PCIBusId) -> Result<Device> {
+    let mut device_id = i32::MAX;
+    unsafe {
+        let code = sys::hipDeviceGetByPCIBusId(&mut device_id, pci_bus_id.as_mut_ptr());
+        (Device::new(device_id), code).to_result()
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn test_get_device_by_pci_bus_id() {
+        // we are relying on `get_device_pci_bus_id()` working as intended to test this function.
+        // TODO: consider mocking to avoid test dependencies
+        // First get a valid PCI bus ID from an existing device
+        let device = Device::new(0);
+        let pci_id = get_device_pci_bus_id(device).unwrap();
+
+        // Test getting device by that PCI ID
+        let result = get_device_by_pci_bus_id(pci_id);
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap().id(), device.id());
+    }
+
+    #[test]
+    fn test_get_device_by_invalid_pci_bus_id() {
+        let invalid_pci_id = PCIBusId::new(); // invalid PCI ID, only contains `0`'s
+        let result = get_device_by_pci_bus_id(invalid_pci_id);
+        assert!(result.is_err());
+    }
 
     #[test]
     fn test_get_device_pci_bus_id() {
