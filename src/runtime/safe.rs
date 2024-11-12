@@ -278,7 +278,7 @@ pub fn get_device_p2p_attribute(
 /// * The device is invalid
 /// * The runtime is not initialized
 /// * There was an error retrieving the PCI bus ID
-pub fn get_device_get_pci_bus_id(device: Device) {
+pub fn get_device_get_pci_bus_id(device: Device) -> Result<String> {
     let buffer_size = 16;
     let mut buffer = vec![0i8; buffer_size];
 
@@ -286,7 +286,8 @@ pub fn get_device_get_pci_bus_id(device: Device) {
         let code = sys::hipDeviceGetPCIBusId(buffer.as_mut_ptr(), buffer.len() as i32, device.id);
         // Convert the C string to a Rust String
         let c_str = CStr::from_ptr(buffer.as_ptr());
-        (c_str.to_string_lossy().into_owned(), code).to_result()
+        let rust_str = c_str.to_string_lossy().into_owned();
+        (rust_str, code).to_result()
     }
 }
 
