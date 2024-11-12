@@ -179,7 +179,7 @@ pub fn runtime_get_version() -> Result<Version> {
 /// * There was an error retrieving the device name
 /// * The name string could not be converted to valid UTF-8
 pub fn get_device_name(device: Device) -> Result<String> {
-    const buffer_size: usize = 64;
+    const buffe: usize = 64;
     let mut buffer = vec![0i8; buffer_size];
 
     unsafe {
@@ -301,7 +301,7 @@ pub fn get_device_pci_bus_id(device: Device) -> Result<PCIBusId> {
 /// * The PCI bus ID string is invalid
 /// * No device with the specified PCI bus ID exists
 /// * The runtime is not initialized
-pub fn get_device_by_pci_bus_id(pci_bus_id: PCIBusId) -> Result<Device> {
+pub fn get_device_by_pci_bus_id(mut pci_bus_id: PCIBusId) -> Result<Device> {
     let mut device_id = i32::MAX;
     unsafe {
         let code = sys::hipDeviceGetByPCIBusId(&mut device_id, pci_bus_id.as_mut_ptr());
@@ -337,7 +337,7 @@ mod tests {
     #[test]
     fn test_get_device_pci_bus_id() {
         let device = Device::new(0);
-        let result = get_device_get_pci_bus_id(device);
+        let result = get_device_pci_bus_id(device);
         assert!(result.is_ok());
         let pci_id = result.unwrap();
         println!("Device PCI Bus ID: {}", pci_id);
@@ -346,7 +346,7 @@ mod tests {
     #[test]
     fn test_get_device_pci_bus_id_invalid_device() {
         let invalid_device = Device::new(99);
-        let result = get_device_get_pci_bus_id(invalid_device);
+        let result = get_device_pci_bus_id(invalid_device);
         assert!(result.is_err());
         assert_eq!(result.unwrap_err().kind, HipErrorKind::InvalidDevice);
     }
