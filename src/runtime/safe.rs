@@ -288,7 +288,7 @@ mod tests {
 
         for attr in attributes {
             let result = get_device_p2p_attribute(attr, device, device);
-            assert!(result.is_ok());
+            assert!(result.is_err(), "expect getting P2P attribute from same device will fail, failed");
             let value = result.unwrap();
             println!(
                 "{:?} attribute value for device {}: {}",
