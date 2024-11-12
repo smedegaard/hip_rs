@@ -265,9 +265,52 @@ pub fn get_device_p2p_attribute(
     }
 }
 
+/// Gets the PCI bus ID string for a HIP device.
+///
+/// # Arguments
+/// * `device` - The device [`crate::Device`] to query
+///
+/// # Returns
+/// * `Result<String>` - The PCI bus ID string if successful
+///
+/// # Errors
+/// Returns `HipError` if:
+/// * The device is invalid
+/// * The runtime is not initialized
+/// * There was an error retrieving the PCI bus ID
+pub fn get_device_get_pci_bus_id(device: Device) -> Result<String> {
+    let buffer_size = 16;
+    let mut buffer = vec![0i8; buffer_size];
+
+    unsafe {
+        let code = sys::hipDeviceGetPCIBusId(buffer.as_mut_ptr(), buffer.len() as i32, device.id);
+        // Convert the C string to a Rust String
+        let c_str = CStr::from_ptr(buffer.as_ptr());
+        let rust_str = c_str.to_string_lossy().into_owned();
+        (rust_str, code).to_result()
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn test_get_device_pci_bus_id() {
+        let device = Device::new(0);
+        let result = get_device_get_pci_bus_id(device);
+        assert!(result.is_ok());
+        let pci_id = result.unwrap();
+        println!("Device PCI Bus ID: {}", pci_id);
+    }
+
+    #[test]
+    fn test_get_device_pci_bus_id_invalid_device() {
+        let invalid_device = Device::new(99);
+        let result = get_device_get_pci_bus_id(invalid_device);
+        assert!(result.is_err());
+        assert_eq!(result.unwrap_err().kind, HipErrorKind::InvalidDevice);
+    }
 
     #[test]
     fn test_get_device_p2p_attribute() {
