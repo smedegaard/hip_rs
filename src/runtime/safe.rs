@@ -179,7 +179,7 @@ pub fn runtime_get_version() -> Result<Version> {
 /// * There was an error retrieving the device name
 /// * The name string could not be converted to valid UTF-8
 pub fn get_device_name(device: Device) -> Result<String> {
-    const buffe: usize = 64;
+    const buffer_size: usize = 64;
     let mut buffer = vec![0i8; buffer_size];
 
     unsafe {
