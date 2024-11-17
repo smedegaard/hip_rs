@@ -1,4 +1,8 @@
-//! HIP Runtime API bindings
-mod safe;
+// src/runtime/mod.rs
+mod init;
+mod memory;
 pub mod sys;
-mod types;
+
+// Re-export core functionality
+pub use init::*;
+pub use memory::*;
