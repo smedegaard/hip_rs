@@ -61,3 +61,33 @@ impl<T> MemoryPointer<T> {
         self.size
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_new_zero_size() {
+        let result = MemoryPointer::<u8>::new(0).unwrap();
+        assert!(result.ptr.is_null());
+        assert_eq!(result.size, 0);
+    }
+
+    #[test]
+    fn test_new_valid_size() {
+        let size = 1024;
+        let result = MemoryPointer::<u8>::new(size).unwrap();
+        assert!(!result.ptr.is_null());
+        assert_eq!(result.size, size);
+    }
+
+    #[test]
+    fn test_new_different_types() {
+        // Test with different sized types
+        let result = MemoryPointer::<u32>::new(100).unwrap();
+        assert!(!result.ptr.is_null());
+
+        let result = MemoryPointer::<f64>::new(100).unwrap();
+        assert!(!result.ptr.is_null());
+    }
+}

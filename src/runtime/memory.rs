@@ -1,8 +1,5 @@
 use super::sys;
-use crate::{
-    types::{Device, Result},
-    MemoryPointer,
-};
+use crate::types::{Device, MemoryPointer, Result};
 
 /// Allocates memory on a HIP device/accelerator.
 ///
