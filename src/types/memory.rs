@@ -66,6 +66,8 @@ impl<T> MemoryPointer<T> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::thread::sleep;
+    use std::time::Duration;
 
     #[test]
     fn test_new_zero_size() {
@@ -90,5 +92,14 @@ mod tests {
 
         let result = MemoryPointer::<f64>::new(100).unwrap();
         assert!(!result.ptr.is_null());
+    }
+
+    #[test]
+    fn test_large_allocation() {
+        let mb = 1024 * 1024;
+        let size = (65501 / 2) * mb; // Half of 65501 MB
+        let result = MemoryPointer::<u8>::new(size).unwrap();
+        assert!(!result.ptr.is_null());
+        sleep(Duration::from_secs(5));
     }
 }
