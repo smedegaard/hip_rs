@@ -16,7 +16,6 @@ use crate::types::{Device, MemoryPointer, Result};
 /// * `Ok(MemoryPointer)` - Handle to allocated device memory
 /// * `Err(HipError)` - Error occurred during allocation
 /// ```
-pub fn malloc<T>(size: usize) -> Result<MemoryPointer> {
-    let pointer = MemoryPointer::new(size);
-    (pointer, code).to_result()
+pub fn malloc<T>(size: usize) -> Result<MemoryPointer<T>> {
+    MemoryPointer::new(size)
 }

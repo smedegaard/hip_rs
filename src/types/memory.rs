@@ -1,4 +1,5 @@
 use super::{HipError, HipResult, Result};
+use crate::sys;
 
 /// A wrapper for device memory allocated on the GPU.
 /// Automatically frees the memory when dropped.
@@ -11,7 +12,7 @@ impl<T> MemoryPointer<T> {
     pub fn new(size: usize) -> Result<Self> {
         // Handle zero size allocation according to spec
         if size == 0 {
-            return Ok(DevicePointer {
+            return Ok(MemoryPointer {
                 ptr: std::ptr::null_mut(),
                 size: 0,
             });
@@ -49,7 +50,7 @@ impl<T> Drop for MemoryPointer<T> {
 }
 
 impl<T> MemoryPointer<T> {
-    /// Returns the raw device pointer.
+    /// Returns the raw memory pointer.
     ///
     /// Note: This pointer cannot be directly dereferenced from CPU code.
     pub fn as_ptr(&self) -> *mut T {
