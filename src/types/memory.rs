@@ -98,8 +98,8 @@ mod tests {
     fn test_large_allocation() {
         let mb = 1024 * 1024;
         let size = (65501 / 2) * mb; // Half of 65501 MB
-        let result = MemoryPointer::new(size).unwrap();
+        let result = MemoryPointer::new(size);
         sleep(Duration::from_secs(5));
-        assert!(!result.ptr.is_null());
+        assert!(!result.unwrap().ptr.is_null());
     }
 }
