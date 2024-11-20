@@ -99,7 +99,7 @@ mod tests {
         crate::runtime::initialize();
         let device = crate::runtime::get_device().unwrap();
         println!("ACTIVE DEVICE:");
-        println!(device.id);
+        println!("{}", device.id);
         let mb = 1024 * 1024;
         let size = (65501 / 2) * mb;
         println!("Attempting to allocate {} bytes", size);
