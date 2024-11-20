@@ -99,7 +99,7 @@ mod tests {
         let mb = 1024 * 1024;
         let size = (65501 / 2) * mb;
         println!("Attempting to allocate {} bytes", size);
-        let result = MemoryPointer::new(size);
+        let result = MemoryPointer::<u8>::new(size);
         match &result {
             Ok(ptr) => println!("Allocation succeeded, ptr: {:p}", ptr.as_ptr()),
             Err(e) => println!("Allocation failed: {}", e),
