@@ -1,5 +1,7 @@
 use super::sys;
-use crate::types::{Device, DeviceP2PAttribute, HipError, HipErrorKind, PCIBusId, Result};
+use crate::types::{
+    Device, DeviceP2PAttribute, HipError, HipErrorKind, HipResult, PCIBusId, Result,
+};
 use std::ffi::CStr;
 use uuid::Uuid;
 
@@ -396,13 +398,6 @@ mod tests {
         let version = result.unwrap();
         assert!(version.major > 0);
         println!("Compute Capability: {}.{}", version.major, version.minor);
-    }
-
-    #[test]
-    fn test_initialize() {
-        // Test success case
-        let result = initialize();
-        assert!(result.is_ok());
     }
 
     #[test]

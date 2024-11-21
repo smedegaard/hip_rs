@@ -64,6 +64,13 @@ mod tests {
     use super::*;
 
     #[test]
+    fn test_initialize() {
+        // Test success case
+        let result = initialize();
+        assert!(result.is_ok());
+    }
+
+    #[test]
     fn test_runtime_get_version() {
         let result = runtime_get_version();
         assert!(result.is_ok());
