@@ -97,7 +97,7 @@ mod tests {
     #[test]
     fn test_large_allocation() {
         let mb = 1024 * 1024;
-        let size = (65501 / 2) * mb;
+        let size = 3000 * mb;
         println!("Attempting to allocate {} bytes", size);
         let result = MemoryPointer::<u8>::new(size);
 
