@@ -96,18 +96,23 @@ mod tests {
 
     #[test]
     fn test_large_allocation() {
-        crate::runtime::initialize();
-        let device = crate::runtime::get_device().unwrap();
-        println!("ACTIVE DEVICE:");
-        println!("{}", device.id);
         let mb = 1024 * 1024;
         let size = (65501 / 2) * mb;
         println!("Attempting to allocate {} bytes", size);
         let result = MemoryPointer::<u8>::new(size);
+
         match &result {
-            Ok(ptr) => println!("Allocation succeeded, ptr: {:p}", ptr.as_ptr()),
+            Ok(ptr) => {
+                println!("Allocation succeeded, ptr: {:p}", ptr.as_ptr());
+                unsafe {
+                    // Fill device memory
+                    let code = sys::hipMemsetD8(ptr.as_ptr() as *mut std::ffi::c_void, 0xAA, size);
+                    assert_eq!(code, 0, "hipMemsetD8 failed with error code: {}", code);
+                }
+            }
             Err(e) => println!("Allocation failed: {}", e),
         }
+
         sleep(Duration::from_secs(5));
         assert!(!result.unwrap().ptr.is_null());
         sleep(Duration::from_secs(10));
