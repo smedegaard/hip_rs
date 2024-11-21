@@ -107,6 +107,7 @@ mod tests {
                 unsafe {
                     // Fill device memory
                     let code = sys::hipMemsetD8(ptr.as_ptr() as *mut std::ffi::c_void, 0xAA, size);
+                    sleep(Duration::from_secs(5));
                     assert_eq!(code, 0, "hipMemsetD8 failed with error code: {}", code);
                 }
             }
