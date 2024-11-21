@@ -29,7 +29,7 @@ use crate::types::{Device, Result};
 /// ```
 pub fn set_device(device: Device) -> Result<()> {
     unsafe {
-        code = sys::hipSetDevice(device.id);
+        let code = sys::hipSetDevice(device.id);
         ((), code).to_result()
     }
 }
