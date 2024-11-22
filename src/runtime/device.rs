@@ -254,6 +254,38 @@ pub fn get_device_by_pci_bus_id(mut pci_bus_id: PCIBusId) -> Result<Device> {
     }
 }
 
+/// Sets a list of valid devices that can be used.
+///
+/// This function specifies a list of devices that can be used for HIP operations.
+/// Only devices in this list will be considered valid targets for operations.
+///
+/// # Arguments
+/// * `devices` - A slice of [`Device`](Device) instances representing the valid devices. If `devices` is empty, all available devices will be set.
+///
+/// # Returns
+/// * `Ok(())` if the devices were successfully set as valid
+/// * `Err(HipError)` if the operation failed
+///
+/// # Errors
+/// Returns `HipError` if:
+/// * Any device ID in the list is invalid (greater than or equal to device count, or less than 0)
+/// * The list is too long
+/// * The HIP runtime is not initialized
+pub fn set_valid_devices(devices: &[Device]) -> Result<()> {
+    let device_ids: Vec<i32> = if devices.is_empty() {
+        let device_count = get_device_count()?;
+        (0..device_count).collect()
+    } else {
+        devices.iter().map(|d| d.id()).collect()
+    };
+
+    unsafe {
+        let code =
+            sys::hipSetValidDevices(device_ids.as_ptr() as *mut i32, device_ids.len() as i32);
+        ((), code).to_result()
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -436,6 +468,32 @@ mod tests {
         // Test error case with invalid device
         let invalid_device = Device::new(99);
         let result = set_device(invalid_device);
+        assert!(result.is_err());
+        assert_eq!(result.unwrap_err().kind, HipErrorKind::InvalidDevice);
+    }
+
+    #[test]
+    fn test_set_valid_devices() {
+        // Test with valid devices
+        let devices = vec![Device::new(0), Device::new(1)];
+        let result = set_valid_devices(&devices);
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_set_valid_devices_empty_list() {
+        // Test with empty device list
+        let devices = vec![];
+        let result = set_valid_devices(&devices);
+        assert!(result.is_err());
+        assert_eq!(result.unwrap_err().kind, HipErrorKind::InvalidValue);
+    }
+
+    #[test]
+    fn test_set_valid_devices_invalid_device() {
+        // Test with invalid device ID
+        let devices = vec![Device::new(99)]; // Assuming device 99 doesn't exist
+        let result = set_valid_devices(&devices);
         assert!(result.is_err());
         assert_eq!(result.unwrap_err().kind, HipErrorKind::InvalidDevice);
     }
