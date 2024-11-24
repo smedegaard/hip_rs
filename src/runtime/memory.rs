@@ -55,7 +55,7 @@ mod tests {
 
     #[test]
     fn test_free_null_pointer() {
-        let ptr: MemoryPointer<u8> = MemoryPointer::null();
+        let ptr: MemoryPointer<_> = MemoryPointer::null().expect("Not able to create null pointer");
         assert!(free(ptr).is_ok());
     }
 
