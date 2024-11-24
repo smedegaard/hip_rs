@@ -48,3 +48,20 @@ pub fn free<T>(ptr: MemoryPointer<T>) -> Result<()> {
         ((), code).to_result()
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_free_null_pointer() {
+        let ptr: MemoryPointer<u8> = MemoryPointer::null();
+        assert!(free(ptr).is_ok());
+    }
+
+    #[test]
+    fn test_free_allocated_memory() {
+        let ptr = malloc::<u8>(1024).unwrap();
+        assert!(free(ptr).is_ok());
+    }
+}
