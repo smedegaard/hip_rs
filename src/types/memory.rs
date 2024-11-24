@@ -36,12 +36,7 @@ impl<T> MemoryPointer<T> {
     }
 
     pub fn null() -> Result<Self> {
-        let pointer = Self {
-            ptr: std::ptr::null_mut() as *mut T,
-            size: 0,
-        };
-
-        (pointer, code).to_result()
+        Self::new(0)
     }
 }
 
