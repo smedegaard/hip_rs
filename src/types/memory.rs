@@ -34,6 +34,18 @@ impl<T> MemoryPointer<T> {
 
         (pointer, code).to_result()
     }
+
+    /// Returns the raw memory pointer.
+    ///
+    /// Note: This pointer cannot be directly dereferenced from CPU code.
+    pub fn as_ptr(&self) -> *mut T {
+        self.ptr
+    }
+
+    /// Returns the size in bytes of the allocated memory
+    pub fn size(&self) -> usize {
+        self.size
+    }
 }
 
 // The Drop trait does not return anything by design
@@ -46,20 +58,6 @@ impl<T> Drop for MemoryPointer<T> {
                 log::error!("MemoryPointer failed to free memory: {}", error);
             }
         }
-    }
-}
-
-impl<T> MemoryPointer<T> {
-    /// Returns the raw memory pointer.
-    ///
-    /// Note: This pointer cannot be directly dereferenced from CPU code.
-    pub fn as_ptr(&self) -> *mut T {
-        self.ptr
-    }
-
-    /// Returns the size in bytes of the allocated memory
-    pub fn size(&self) -> usize {
-        self.size
     }
 }
 
