@@ -1,5 +1,5 @@
 use super::flags::DeviceMallocFlag;
-use super::{HipError, HipResult, Result};
+use super::{HipError, HipErrorKind, HipResult, Result};
 use crate::sys;
 
 /// A wrapper for device memory allocated on the GPU.
