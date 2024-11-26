@@ -151,9 +151,9 @@ pub enum MemoryCopyKind {
     DeviceToDeviceNoCU = 1024,
 }
 
-impl From<MemoryCopyKind> for sys::hipMemoryCopyKind {
+impl From<MemoryCopyKind> for u32 {
     fn from(kind: MemoryCopyKind) -> Self {
-        kind as sys::hipMemoryCopyKind
+        kind as u32
     }
 }
 
