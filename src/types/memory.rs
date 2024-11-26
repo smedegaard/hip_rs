@@ -44,7 +44,7 @@ unsafe fn memory_copy(
     size: usize,
     kind: MemoryCopyKind,
 ) -> Result<()> {
-    let code = sys::hipMemcpy(dst, src, size, kind);
+    let code = sys::hipMemcpy(dst, src, size, kind.into());
     ((), code).to_result()
 }
 
@@ -151,16 +151,16 @@ pub enum MemoryCopyKind {
     DeviceToDeviceNoCU = 1024,
 }
 
-impl From<MemcpyKind> for sys::hipMemcpyKind {
-    fn from(kind: MemcpyKind) -> Self {
-        kind as sys::hipMemcpyKind
+impl From<MemoryCopyKind> for sys::hipMemoryCopyKind {
+    fn from(kind: MemoryCopyKind) -> Self {
+        kind as sys::hipMemoryCopyKind
     }
 }
 
-impl TryFrom<sys::hipMemcpyKind> for MemcpyKind {
+impl TryFrom<sys::hipMemoryCopyKind> for MemoryCopyKind {
     type Error = HipError;
 
-    fn try_from(value: sys::hipMemcpyKind) -> Result<Self> {
+    fn try_from(value: sys::hipMemoryCopyKind) -> Result<Self> {
         match value {
             0 => Ok(Self::HostToHost),
             1 => Ok(Self::HostToDevice),
