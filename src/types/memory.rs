@@ -9,6 +9,10 @@ pub struct MemoryPointer<T> {
     size: usize,
 }
 
+fn to_void_pointer<T>(ptr: *mut *mut T) -> *mut *mut std::ffi::c_void {
+    ptr as *mut *mut std::ffi::c_void
+}
+
 impl<T> MemoryPointer<T> {
     /// Private function that holds common logic for the
     /// memory allocation functions.
@@ -27,10 +31,7 @@ impl<T> MemoryPointer<T> {
         }
 
         let mut ptr = std::ptr::null_mut();
-        let code = alloc_fn(
-            &mut ptr as *mut *mut T as *mut *mut std::ffi::c_void,
-            size * std::mem::size_of::<T>(),
-        );
+        let code = alloc_fn(to_void_pointer(&mut ptr), size * std::mem::size_of::<T>());
 
         let pointer = Self {
             pointer: ptr as *mut T,
@@ -83,7 +84,7 @@ impl<T> MemoryPointer<T> {
     /// Returns the raw memory pointer.
     ///
     /// Note: This pointer cannot be directly dereferenced from CPU code.
-    pub fn as_ptr(&self) -> *mut T {
+    pub fn as_pointer(&self) -> *mut T {
         self.pointer
     }
 
@@ -108,6 +109,8 @@ impl<T> Drop for MemoryPointer<T> {
 
 #[cfg(test)]
 mod tests {
+    use crate::Device;
+
     use super::*;
     use std::thread::sleep;
     use std::time::Duration;
@@ -143,7 +146,6 @@ mod tests {
         let size = 3000 * mb;
         println!("Attempting to allocate {} bytes", size);
         let result = MemoryPointer::<u8>::alloc(size);
-
         sleep(Duration::from_secs(5));
         assert!(!result.unwrap().pointer.is_null());
     }
