@@ -16,7 +16,7 @@ impl<T> MemoryPointer<T> {
     /// Takes the size to allocate and
     fn allocate_with_fn<F>(size: usize, alloc_fn: F) -> Result<Self>
     where
-        F: FnOnce(*mut *mut std::ffi::c_void, usize) -> i32,
+        F: FnOnce(*mut *mut std::ffi::c_void, usize) -> u32,
     {
         // Handle zero size allocation according to spec
         if size == 0 {
@@ -99,7 +99,7 @@ impl<T> Drop for MemoryPointer<T> {
         unsafe {
             let code = sys::hipFree(self.pointer as *mut std::ffi::c_void);
             if code != 0 {
-                let error = HipError::alloc(code);
+                let error = HipError::new(code);
                 log::error!("MemoryPointer failed to free memory: {}", error);
             }
         }
@@ -151,7 +151,7 @@ mod tests {
     #[test]
     fn test_alloc_with_flag_success() {
         let size = 1024;
-        let result = MemoryPointer::<u8>::alloc_with_flag(size, DeviceMallocFlag::Default);
+        let result = MemoryPointer::<u8>::alloc_with_flag(size, DeviceMallocFlag::DEFAULT);
         assert!(result.is_ok());
         let ptr = result.unwrap();
         assert!(!ptr.is_null());
@@ -162,7 +162,7 @@ mod tests {
         let result = MemoryPointer::<u8>::alloc_with_flag(0, DeviceMallocFlag::DEFAULT);
         assert!(result.is_ok());
         let ptr = result.unwrap();
-        assert!(ptr.is_null());
+        assert!(ptr.pointer.is_null());
     }
 
     #[test]
