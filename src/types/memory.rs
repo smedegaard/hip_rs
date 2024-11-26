@@ -154,7 +154,7 @@ mod tests {
         let result = MemoryPointer::<u8>::alloc_with_flag(size, DeviceMallocFlag::DEFAULT);
         assert!(result.is_ok());
         let ptr = result.unwrap();
-        assert!(!ptr.is_null());
+        assert!(!ptr.pointer.is_null());
     }
 
     #[test]
