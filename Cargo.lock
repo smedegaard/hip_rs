@@ -121,6 +121,7 @@ name = "hip-rs"
 version = "0.1.0"
 dependencies = [
  "bindgen",
+ "bitflags",
  "cc",
  "env_logger",
  "log",
