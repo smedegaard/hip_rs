@@ -44,7 +44,7 @@ unsafe fn memory_copy(
     size: usize,
     kind: MemoryCopyKind,
 ) -> Result<()> {
-    let code = sys::hipMemcpy(dst, src, size, kind.into());
+    let code = sys::hipMemcpy(dst, src, size, kind);
     ((), code).to_result()
 }
 
