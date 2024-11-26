@@ -157,10 +157,10 @@ impl From<MemoryCopyKind> for u32 {
     }
 }
 
-impl TryFrom<sys::hipMemoryCopyKind> for MemoryCopyKind {
+impl TryFrom<sys::hipMemcpyKind> for MemoryCopyKind {
     type Error = HipError;
 
-    fn try_from(value: sys::hipMemoryCopyKind) -> Result<Self> {
+    fn try_from(value: sys::hipMemcpyKind) -> Result<Self> {
         match value {
             0 => Ok(Self::HostToHost),
             1 => Ok(Self::HostToDevice),
@@ -244,7 +244,7 @@ mod tests {
     }
 
     #[test]
-    fn test_device_to_device_copy_small() {
+    fn test_device_to_device_copy() {
         // Allocate source memory and initialize with test pattern
         let src_size = 1024;
         let src_mem = MemoryPointer::<u32>::alloc(src_size).unwrap();
