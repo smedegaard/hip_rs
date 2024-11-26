@@ -125,6 +125,44 @@ impl<T> MemoryPointer<T> {
     pub fn size(&self) -> usize {
         self.size
     }
+
+    /// Copies data from this memory pointer to another destination memory pointer.
+    ///
+    /// # Arguments
+    /// * `destination` - The destination memory pointer to copy data to
+    /// * `kind` - The type of memory copy operation to perform
+    ///
+    /// # Returns
+    /// * `Ok(())` if the copy was successful
+    /// * `Err(HipError)` if the operation failed
+    ///
+    /// # Safety Guarantees
+    /// - Checks that neither pointer is null
+    /// - Validates that destination has sufficient size
+    /// - Ensures proper size alignment
+    pub fn copy_to(&self, destination: &MemoryPointer<T>, kind: MemoryCopyKind) -> Result<()> {
+        // Check for null pointers
+        if self.pointer.is_null() || destination.pointer.is_null() {
+            return Err(HipError::from_kind(HipErrorKind::InvalidValue));
+        }
+
+        // Check that destination has sufficient size
+        if destination.size < self.size {
+            return Err(HipError::from_kind(HipErrorKind::InvalidValue));
+        }
+
+        // Calculate total bytes to copy
+        let bytes_to_copy = self.size * std::mem::size_of::<T>();
+
+        unsafe {
+            memory_copy(
+                destination.pointer as *mut std::ffi::c_void,
+                self.pointer as *const std::ffi::c_void,
+                bytes_to_copy,
+                kind,
+            )
+        }
+    }
 }
 
 // The Drop trait does not return anything by design
@@ -266,5 +304,32 @@ mod tests {
                 result.err()
             );
         }
+    }
+
+    #[test]
+    fn test_copy_to() {
+        // Create source memory pointer
+        let src_size = 1024;
+        let src = MemoryPointer::<u32>::alloc(src_size).unwrap();
+
+        // Create destination memory pointer
+        let dst = MemoryPointer::<u32>::alloc(src_size).unwrap();
+
+        // Test device to device copy
+        let result = src.copy_to(&dst, MemoryCopyKind::DeviceToDevice);
+        assert!(result.is_ok());
+
+        // Test with null pointer
+        let null_ptr = MemoryPointer::<u32> {
+            pointer: std::ptr::null_mut(),
+            size: 0,
+        };
+        let result = src.copy_to(&null_ptr, MemoryCopyKind::DeviceToDevice);
+        assert!(result.is_err());
+
+        // Test with insufficient destination size
+        let small_dst = MemoryPointer::<u32>::alloc(src_size / 2).unwrap();
+        let result = src.copy_to(&small_dst, MemoryCopyKind::DeviceToDevice);
+        assert!(result.is_err());
     }
 }
