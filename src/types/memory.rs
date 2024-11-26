@@ -9,8 +9,43 @@ pub struct MemoryPointer<T> {
     size: usize,
 }
 
+/// Converts a typed pointer to a void pointer.
+///
+/// # Arguments
+/// * `ptr` - A mutable pointer to a mutable pointer of type T
+///
+/// # Returns
+/// A void pointer equivalent of the input pointer
 fn to_void_pointer<T>(ptr: *mut *mut T) -> *mut *mut std::ffi::c_void {
     ptr as *mut *mut std::ffi::c_void
+}
+
+/// Copies data between memory locations.
+///
+/// # Arguments
+/// * `dst` - Destination memory address
+/// * `src` - Source memory address
+/// * `size` - Size in bytes to copy
+/// * `kind` - Type of transfer (host to device, device to host, etc.)
+///
+/// # Safety
+/// * The src and dst memory regions must not overlap
+/// * The copy is performed by the current device (set by `runtime::set_device()`)
+/// * For optimal peer-to-peer copies, the current device must have access to both src and dst
+///
+/// # Returns
+/// * `Ok(())` if the copy was successful
+/// * `Err(HipError)` if the operation failed
+///
+/// TODO: Implement peer-to-peer capability
+unsafe fn memory_copy(
+    dst: *mut std::ffi::c_void,
+    src: *const std::ffi::c_void,
+    size: usize,
+    kind: MemoryCopyKind,
+) -> Result<()> {
+    let code = sys::hipMemcpy(dst, src, size, kind.into());
+    ((), code).to_result()
 }
 
 impl<T> MemoryPointer<T> {
@@ -82,8 +117,6 @@ impl<T> MemoryPointer<T> {
     }
 
     /// Returns the raw memory pointer.
-    ///
-    /// Note: This pointer cannot be directly dereferenced from CPU code.
     pub fn as_pointer(&self) -> *mut T {
         self.pointer
     }
@@ -103,6 +136,39 @@ impl<T> Drop for MemoryPointer<T> {
                 let error = HipError::new(code);
                 log::error!("MemoryPointer failed to free memory: {}", error);
             }
+        }
+    }
+}
+
+#[repr(u32)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum MemoryCopyKind {
+    HostToHost = 0,
+    HostToDevice = 1,
+    DeviceToHost = 2,
+    DeviceToDevice = 3,
+    Default = 4,
+    DeviceToDeviceNoCU = 1024,
+}
+
+impl From<MemcpyKind> for sys::hipMemcpyKind {
+    fn from(kind: MemcpyKind) -> Self {
+        kind as sys::hipMemcpyKind
+    }
+}
+
+impl TryFrom<sys::hipMemcpyKind> for MemcpyKind {
+    type Error = HipError;
+
+    fn try_from(value: sys::hipMemcpyKind) -> Result<Self> {
+        match value {
+            0 => Ok(Self::HostToHost),
+            1 => Ok(Self::HostToDevice),
+            2 => Ok(Self::DeviceToHost),
+            3 => Ok(Self::DeviceToDevice),
+            4 => Ok(Self::Default),
+            1024 => Ok(Self::DeviceToDeviceNoCU),
+            _ => Err(HipError::from_kind(HipErrorKind::InvalidValue)),
         }
     }
 }
@@ -175,5 +241,30 @@ mod tests {
         assert!(result.is_ok());
         let ptr = result.unwrap();
         assert!(!ptr.pointer.is_null());
+    }
+
+    #[test]
+    fn test_device_to_device_copy_small() {
+        // Allocate source memory and initialize with test pattern
+        let src_size = 1024;
+        let src_mem = MemoryPointer::<u32>::alloc(src_size).unwrap();
+
+        // Allocate destination memory
+        let dst_mem = MemoryPointer::<u32>::alloc(src_size).unwrap();
+
+        // Copy data from source to destination
+        unsafe {
+            let result = memory_copy(
+                dst_mem.as_pointer() as *mut std::ffi::c_void,
+                src_mem.as_pointer() as *const std::ffi::c_void,
+                src_size * std::mem::size_of::<u32>(),
+                MemoryCopyKind::DeviceToDevice,
+            );
+            assert!(
+                result.is_ok(),
+                "Device to device copy failed: {:?}",
+                result.err()
+            );
+        }
     }
 }
