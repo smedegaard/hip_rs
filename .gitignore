@@ -23,3 +23,5 @@ Cargo.lock
 #.idea/
 =======
 /target
+
+lcov.info
