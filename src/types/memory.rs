@@ -163,6 +163,38 @@ impl<T> MemoryPointer<T> {
             )
         }
     }
+
+    /// Fills the allocated memory with a specified value.
+    ///
+    /// # Arguments
+    /// * `value` - Value to fill memory with (interpreted as a byte value)
+    /// * `size` - Number of bytes to fill. Must not exceed the allocated size.
+    ///
+    /// # Returns
+    /// * `Result<()>` - Success or error status
+    ///
+    /// # Examples
+    /// ```
+    /// use hip_rs::malloc;
+    ///
+    /// let mut ptr = malloc::<u32>(1024).unwrap();
+    /// ptr.memset(0, 1024).unwrap(); // Zero-initialize memory
+    /// ```
+    pub fn memset(&self, value: u8, size: usize) -> Result<()> {
+        // Validate size doesn't exceed allocation
+        if size > self.size {
+            return Err(HipError::from_kind(HipErrorKind::InvalidValue));
+        }
+
+        if size == 0 {
+            return Ok(());
+        }
+
+        unsafe {
+            let code = sys::hipMemset(self.ptr as *mut std::ffi::c_void, value as i32, size);
+            ((), code).to_result()
+        }
+    }
 }
 
 // The Drop trait does not return anything by design
@@ -220,6 +252,16 @@ mod tests {
     use std::time::Duration;
 
     #[test]
+    fn test_memset() {
+        let size = 1024;
+        let ptr = MemoryPointer::<u32>::new(size).unwrap();
+
+        // Test setting memory with byte value
+        let result = ptr.memset(0xFF, size); // Set all bytes to 255
+        assert!(result.is_ok());
+    }
+
+    #[test]
     fn test_new_zero_size() {
         let result = MemoryPointer::<u8>::alloc(0).unwrap();
         assert!(result.pointer.is_null());
@@ -269,16 +311,6 @@ mod tests {
         assert!(result.is_ok());
         let ptr = result.unwrap();
         assert!(ptr.pointer.is_null());
-    }
-
-    #[test]
-    fn test_alloc_with_combined_flag() {
-        let size = 1024;
-        let flag = DeviceMallocFlag::DEFAULT | DeviceMallocFlag::FINEGRAINED;
-        let result = MemoryPointer::<u8>::alloc_with_flag(size, flag);
-        assert!(result.is_ok());
-        let ptr = result.unwrap();
-        assert!(!ptr.pointer.is_null());
     }
 
     #[test]

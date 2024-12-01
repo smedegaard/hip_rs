@@ -19,8 +19,8 @@ impl HipSuccess {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum HipErrorKind {
     InvalidValue = 1,
-    ErrorMemoryAllocation = 2,
-    DeviceAlreadyInUse = 3,
+    MemoryAllocation = 2,
+    NotInitialized = 3,
     Deinitialized = 4,
     InvalidDevice = 101,
     FileNotFound = 301,
