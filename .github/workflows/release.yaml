@@ -11,17 +11,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # Update version in Cargo.toml
-      - name: Update version in Cargo.toml
-        run: |
-          VERSION=${{ steps.get_version.outputs.VERSION }}
-          # Remove 'v' prefix if present
-          VERSION=${VERSION#v}
-          sed -i "s/^version = \".*\"/version = \"$VERSION\"/" Cargo.toml
-
-      # Optional: Verify the update
-      - name: Verify Cargo.toml update
-        run: grep "^version = " Cargo.toml
+      - name: Bump version
+        uses: tj-actions/cargo-bump@v3
 
       - name: Publish to crates.io
         run: cargo publish --token ${CRATES_TOKEN}
