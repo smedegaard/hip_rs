@@ -175,9 +175,9 @@ impl<T> MemoryPointer<T> {
     ///
     /// # Examples
     /// ```
-    /// use hip_rs::malloc;
+    /// use hip_rs::MemoryPointer;
     ///
-    /// let mut ptr = malloc::<u32>(1024).unwrap();
+    /// let mut ptr = MemoryPointer::<u8>::alloc(1024).unwrap();
     /// ptr.memset(0, 1024).unwrap(); // Zero-initialize memory
     /// ```
     pub fn memset(&self, value: u8, size: usize) -> Result<()> {
@@ -254,7 +254,7 @@ mod tests {
     #[test]
     fn test_memset() {
         let size = 1024;
-        let ptr = MemoryPointer::<u32>::alloc(size).unwrap();
+        let ptr = MemoryPointer::<u8>::alloc(size).unwrap();
 
         // Test setting memory with byte value
         let result = ptr.memset(0xFF, size); // Set all bytes to 255
