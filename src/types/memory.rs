@@ -254,7 +254,7 @@ mod tests {
     #[test]
     fn test_memset() {
         let size = 1024;
-        let ptr = MemoryPointer::<u32>::new(size).unwrap();
+        let ptr = MemoryPointer::<u32>::alloc(size).unwrap();
 
         // Test setting memory with byte value
         let result = ptr.memset(0xFF, size); // Set all bytes to 255
