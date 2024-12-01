@@ -32,8 +32,8 @@ impl HipErrorKind {
     pub fn from_raw(error: u32) -> Self {
         match error {
             1 => HipErrorKind::InvalidValue,
-            2 => HipErrorKind::ErrorMemoryAllocation,
-            3 => HipErrorKind::DeviceAlreadyInUse,
+            2 => HipErrorKind::MemoryAllocation,
+            3 => HipErrorKind::NotInitialized,
             4 => HipErrorKind::Deinitialized,
             101 => HipErrorKind::InvalidDevice,
             301 => HipErrorKind::FileNotFound,
