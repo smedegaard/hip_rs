@@ -191,7 +191,7 @@ impl<T> MemoryPointer<T> {
         }
 
         unsafe {
-            let code = sys::hipMemset(self.ptr as *mut std::ffi::c_void, value as i32, size);
+            let code = sys::hipMemset(self.pointer as *mut std::ffi::c_void, value as i32, size);
             ((), code).to_result()
         }
     }
