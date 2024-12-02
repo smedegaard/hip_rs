@@ -25,10 +25,11 @@ jobs:
           git config user.email "<>"
 
       - name: Commit and push changes
-        uses: devops-infra/action-commit-push@master
+        run: |
+          git add Cargo.toml
+          git commit -m '[Github Actions] update version to ${{ steps.get_version.outputs.RELEASE_VERSION }}'
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          commit_message: Replaced foo with bar
 
       - name: Publish to crates.io
         run: cargo publish --token ${CRATES_TOKEN}
