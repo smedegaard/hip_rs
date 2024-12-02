@@ -2,7 +2,10 @@ name: Release
 
 on:
   release:
-    types: [created]
+    types: [created, edited]
+
+permissions:
+  contents: write
 
 jobs:
   publish:
@@ -10,6 +13,8 @@ jobs:
     runs-on: self-hosted
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Get release version
         id: get_version
@@ -19,17 +24,12 @@ jobs:
         run: |
           cargo set-version "${{ steps.get_version.outputs.RELEASE_VERSION }}"
 
-      - name: setup git config
-        run: |
-          git config user.name "GitHub Actions"
-          git config user.email "<>"
-
       - name: Commit and push changes
         run: |
+          git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}
           git add Cargo.toml
           git commit -m '[Github Actions] update version to ${{ steps.get_version.outputs.RELEASE_VERSION }}'
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
+          git push origin HEAD:main
 
       - name: Publish to crates.io
         run: cargo publish --token ${CRATES_TOKEN}
