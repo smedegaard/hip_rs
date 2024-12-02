@@ -4,6 +4,9 @@ on:
   release:
     types: [created]
 
+permissions:
+  contents: write
+
 jobs:
   publish:
     name: Publish to crates.io
@@ -21,11 +24,10 @@ jobs:
 
       - name: Commit and push changes
         run: |
+          git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}
           git add Cargo.toml
           git commit -m '[Github Actions] update version to ${{ steps.get_version.outputs.RELEASE_VERSION }}'
           git push origin HEAD:main
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Publish to crates.io
         run: cargo publish --token ${CRATES_TOKEN}
