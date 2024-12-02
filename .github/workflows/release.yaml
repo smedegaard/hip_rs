@@ -19,11 +19,6 @@ jobs:
         run: |
           cargo set-version "${{ steps.get_version.outputs.RELEASE_VERSION }}"
 
-      - name: setup git config
-        run: |
-          git config user.name "GitHub Actions"
-          git config user.email "<>"
-
       - name: Commit and push changes
         run: |
           git add Cargo.toml
