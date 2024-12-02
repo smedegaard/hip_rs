@@ -2,7 +2,7 @@ name: Release
 
 on:
   release:
-    types: [created,updated]
+    types: [created]
 
 jobs:
   publish:
@@ -11,8 +11,24 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Bump version
-        uses: tj-actions/cargo-bump@v3
+      - name: Get release version
+        id: get_version
+        run: echo "RELEASE_VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+
+      - name: Update Cargo.toml version
+        run: |
+          cargo set-version "${{ steps.get_version.outputs.RELEASE_VERSION }}"
+
+      - name: setup git config
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email "<>"
+
+      - name: Commit and push changes
+        uses: devops-infra/action-commit-push@master
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          commit_message: Replaced foo with bar
 
       - name: Publish to crates.io
         run: cargo publish --token ${CRATES_TOKEN}
