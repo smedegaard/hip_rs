@@ -1,6 +1,6 @@
 use bitflags::bitflags;
 
-bitflags::bitflags! {
+bitflags! {
     pub struct DeviceMallocFlag: u32 {
         const DEFAULT = 0x0;
         const FINEGRAINED = 0x1;

@@ -3,7 +3,7 @@ use std::path::PathBuf;
 
 fn main() {
     // Tell cargo when to rerun this build script
-    println!("cargo:rerun-if-changed=src/runtime/sys/wrapper.h");
+    println!("cargo:rerun-if-changed=src/core/sys/wrapper.h");
     println!("cargo:rerun-if-changed=build.rs");
 
     // Set up HIP paths - making them configurable via environment variables
@@ -28,7 +28,7 @@ fn main() {
 fn generate_bindings(hip_include_path: &str) {
     let out_path = PathBuf::from(env::var("OUT_DIR").unwrap());
     let bindings = bindgen::Builder::default()
-        .header("src/runtime/sys/wrapper.h")
+        .header("src/core/sys/wrapper.h")
         .clang_arg(&format!("-I{}", hip_include_path))
         .clang_arg("-D__HIP_PLATFORM_AMD__")
         // Blocklist problematic items
