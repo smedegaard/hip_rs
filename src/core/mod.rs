@@ -1,17 +1,17 @@
 mod device;
-mod device_type;
+mod device_types;
 mod flags;
 mod init;
-mod memory_type;
+mod memory;
 mod result;
 mod stream;
 pub mod sys;
 
 // Re-export core functionality
 pub use device::*;
-pub use device_type::*;
+pub use device_types::*;
 pub use flags::*;
 pub use init::*;
-pub use memory_type::*;
+pub use memory::*;
 pub use result::*;
 pub use stream::*;

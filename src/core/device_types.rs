@@ -1,67 +1,7 @@
-use super::result::{HipError, HipErrorKind, Result};
-use crate::sys;
+use super::sys;
+use super::{HipError, HipErrorKind, HipResult, Result};
 use std::ffi::CStr;
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub struct Device {
-    pub(crate) id: i32,
-}
-
-impl Device {
-    /// Create a new Device handle
-    pub fn new(id: i32) -> Self {
-        Device { id }
-    }
-
-    /// Get the raw device ID
-    pub fn id(&self) -> i32 {
-        self.id
-    }
-}
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum DeviceP2PAttribute {
-    PerformanceRank,
-    AccessSupported,
-    NativeAtomicSupported,
-    HipArrayAccessSupported,
-}
-
-impl From<DeviceP2PAttribute> for u32 {
-    fn from(attr: DeviceP2PAttribute) -> Self {
-        match attr {
-            DeviceP2PAttribute::PerformanceRank => {
-                sys::hipDeviceP2PAttr_hipDevP2PAttrPerformanceRank
-            }
-            DeviceP2PAttribute::AccessSupported => {
-                sys::hipDeviceP2PAttr_hipDevP2PAttrAccessSupported
-            }
-            DeviceP2PAttribute::NativeAtomicSupported => {
-                sys::hipDeviceP2PAttr_hipDevP2PAttrNativeAtomicSupported
-            }
-            DeviceP2PAttribute::HipArrayAccessSupported => {
-                sys::hipDeviceP2PAttr_hipDevP2PAttrHipArrayAccessSupported
-            }
-        }
-    }
-}
-
-impl TryFrom<u32> for DeviceP2PAttribute {
-    type Error = HipError;
-
-    fn try_from(value: sys::hipDeviceP2PAttr) -> Result<Self> {
-        match value {
-            sys::hipDeviceP2PAttr_hipDevP2PAttrPerformanceRank => Ok(Self::PerformanceRank),
-            sys::hipDeviceP2PAttr_hipDevP2PAttrAccessSupported => Ok(Self::AccessSupported),
-            sys::hipDeviceP2PAttr_hipDevP2PAttrNativeAtomicSupported => {
-                Ok(Self::NativeAtomicSupported)
-            }
-            sys::hipDeviceP2PAttr_hipDevP2PAttrHipArrayAccessSupported => {
-                Ok(Self::HipArrayAccessSupported)
-            }
-            _ => Err(HipError::from_kind(HipErrorKind::InvalidValue)),
-        }
-    }
-}
+use std::i32;
 
 pub unsafe trait UnsafeToString {
     unsafe fn to_string(&self) -> String;
@@ -113,6 +53,51 @@ impl PCIBusId {
     /// The buffer size as an i32, primarily for FFI compatibility.
     pub fn len(&self) -> i32 {
         Self::BUFFER_SIZE as i32
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum DeviceP2PAttribute {
+    PerformanceRank,
+    AccessSupported,
+    NativeAtomicSupported,
+    HipArrayAccessSupported,
+}
+
+impl From<DeviceP2PAttribute> for u32 {
+    fn from(attr: DeviceP2PAttribute) -> Self {
+        match attr {
+            DeviceP2PAttribute::PerformanceRank => {
+                sys::hipDeviceP2PAttr_hipDevP2PAttrPerformanceRank
+            }
+            DeviceP2PAttribute::AccessSupported => {
+                sys::hipDeviceP2PAttr_hipDevP2PAttrAccessSupported
+            }
+            DeviceP2PAttribute::NativeAtomicSupported => {
+                sys::hipDeviceP2PAttr_hipDevP2PAttrNativeAtomicSupported
+            }
+            DeviceP2PAttribute::HipArrayAccessSupported => {
+                sys::hipDeviceP2PAttr_hipDevP2PAttrHipArrayAccessSupported
+            }
+        }
+    }
+}
+
+impl TryFrom<u32> for DeviceP2PAttribute {
+    type Error = HipError;
+
+    fn try_from(value: sys::hipDeviceP2PAttr) -> Result<Self> {
+        match value {
+            sys::hipDeviceP2PAttr_hipDevP2PAttrPerformanceRank => Ok(Self::PerformanceRank),
+            sys::hipDeviceP2PAttr_hipDevP2PAttrAccessSupported => Ok(Self::AccessSupported),
+            sys::hipDeviceP2PAttr_hipDevP2PAttrNativeAtomicSupported => {
+                Ok(Self::NativeAtomicSupported)
+            }
+            sys::hipDeviceP2PAttr_hipDevP2PAttrHipArrayAccessSupported => {
+                Ok(Self::HipArrayAccessSupported)
+            }
+            _ => Err(HipError::from_kind(HipErrorKind::InvalidValue)),
+        }
     }
 }
 

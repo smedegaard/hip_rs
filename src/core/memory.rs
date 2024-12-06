@@ -245,8 +245,7 @@ impl TryFrom<sys::hipMemcpyKind> for MemoryCopyKind {
 
 #[cfg(test)]
 mod tests {
-    use crate::Device;
-
+    // use crate::Device;
     use super::*;
     use std::thread::sleep;
     use std::time::Duration;
