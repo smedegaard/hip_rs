@@ -1,5 +1,5 @@
 use super::sys;
-use super::{DeviceP2PAttribute, HipError, HipErrorKind, HipResult, PCIBusId, Result};
+use super::{DeviceP2PAttribute, HipError, HipErrorKind, HipResult, MemPool, PCIBusId, Result};
 use semver::Version;
 use std::ffi::CStr;
 use std::i32;
@@ -150,11 +150,28 @@ impl Device {
     /// * There was an error retrieving the PCI bus ID
     pub fn get_device_pci_bus_id(&self) -> Result<PCIBusId> {
         let mut pci_bus_id = PCIBusId::new();
-
         unsafe {
             let code =
                 sys::hipDeviceGetPCIBusId(pci_bus_id.as_mut_ptr(), pci_bus_id.len(), self.id);
             (pci_bus_id, code).to_result()
+        }
+    }
+
+    /// Gets the default memory pool associated with this device.
+    ///
+    /// # Returns
+    /// * `Result<MemPool>` - The default memory pool for the device if successful
+    ///
+    /// # Errors
+    /// Returns `HipError` if:
+    /// * The device ID is invalid
+    /// * The operation is not supported on this device/platform
+    /// * There was an error retrieving the memory pool
+    pub fn get_default_mem_pool(&self) -> Result<MemPool> {
+        let mut mem_pool = std::ptr::null_mut();
+        unsafe {
+            let code = sys::hipDeviceGetDefaultMemPool(&mut mem_pool, self.id);
+            (MemPool::from_raw(mem_pool), code).to_result()
         }
     }
 }
@@ -299,6 +316,27 @@ pub fn get_device_by_pci_bus_id(mut pci_bus_id: PCIBusId) -> Result<Device> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn test_get_default_mem_pool() {
+        let device = Device::new(0);
+        let result = device.get_default_mem_pool();
+
+        // The operation might not be supported on all devices/platforms
+        match result {
+            Ok(mem_pool) => {
+                println!("Successfully retrieved default memory pool");
+                assert!(!mem_pool.is_null());
+            }
+            Err(e) => {
+                // Check if the error is "not supported" which is acceptable
+                if e.kind != HipErrorKind::NotSupported {
+                    panic!("Unexpected error getting default memory pool: {:?}", e);
+                }
+                println!("Memory pools not supported on this device/platform");
+            }
+        }
+    }
 
     #[test]
     fn test_get_device_by_pci_bus_id() {
