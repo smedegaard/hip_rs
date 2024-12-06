@@ -210,6 +210,33 @@ impl<T> Drop for MemoryPointer<T> {
     }
 }
 
+/// Represents a HIP memory pool handle
+#[derive(Debug)]
+pub struct MemPool {
+    handle: sys::hipMemPool_t,
+}
+
+impl MemPool {
+    /// Creates a new MemPool from a raw handle
+    pub(crate) fn from_raw(handle: sys::hipMemPool_t) -> Self {
+        MemPool { handle }
+    }
+
+    /// Returns true if the memory pool handle is null
+    pub fn is_null(&self) -> bool {
+        self.handle.is_null()
+    }
+
+    /// Gets the raw handle to the memory pool
+    pub fn handle(&self) -> sys::hipMemPool_t {
+        self.handle
+    }
+}
+
+// Implement Send and Sync since MemPool can be safely shared between threads
+unsafe impl Send for MemPool {}
+unsafe impl Sync for MemPool {}
+
 #[repr(u32)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum MemoryCopyKind {

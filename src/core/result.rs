@@ -24,6 +24,7 @@ pub enum HipErrorKind {
     Deinitialized = 4,
     InvalidDevice = 101,
     FileNotFound = 301,
+    NotSupported = 801,
     Unknown = 999,
 }
 
@@ -37,6 +38,7 @@ impl HipErrorKind {
             4 => HipErrorKind::Deinitialized,
             101 => HipErrorKind::InvalidDevice,
             301 => HipErrorKind::FileNotFound,
+            801 => HipErrorKind::NotSupported,
             _ => HipErrorKind::Unknown,
         }
     }
