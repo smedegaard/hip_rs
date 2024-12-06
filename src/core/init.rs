@@ -1,5 +1,5 @@
 use super::sys;
-use crate::{Device, HipErrorKind, HipResult, Result};
+use crate::{HipResult, Result};
 use semver::Version;
 use std::i32;
 

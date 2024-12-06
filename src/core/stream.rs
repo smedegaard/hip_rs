@@ -1,4 +1,4 @@
-use crate::{sys, HipErrorKind, HipResult, Result};
+use crate::{sys, HipResult, Result};
 
 /// A handle to a HIP stream that executes commands in order.
 #[derive(Debug)]
