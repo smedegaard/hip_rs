@@ -1,4 +1,4 @@
-use crate::{sys, HipResult, Result};
+use crate::{sys, HipError, HipResult, Result};
 
 /// A handle to a HIP stream that executes commands in order.
 #[derive(Debug)]
@@ -34,6 +34,27 @@ impl Stream {
     pub fn handle(&self) -> sys::hipStream_t {
         self.handle
     }
+
+    /// Queries the completion status of all operations in the stream.
+    ///
+    /// This function provides a snapshot of the current state of the stream. It checks if all
+    /// operations in the specified stream have completed execution.
+    ///
+    /// # Thread Safety
+    /// This function is thread-safe, but note that the stream status may change immediately
+    /// after the query if other threads are submitting work to the same stream.
+    ///
+    /// # Returns
+    /// * `Ok(())` - All operations in the stream have completed
+    /// * `Err(HipError)` - Either:
+    ///   - `HipErrorKind::NotReady` if operations are still in progress
+    ///   - `HipErrorKind::InvalidHandle` if the stream handle is invalid
+    pub fn query_stream(&self) -> Result<()> {
+        unsafe {
+            let code = sys::hipStreamQuery(self.handle);
+            ((), code).to_result()
+        }
+    }
 }
 
 impl Drop for Stream {
@@ -52,6 +73,15 @@ impl Drop for Stream {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn test_stream_query() {
+        let stream = Stream::create().unwrap();
+
+        // Test querying an empty stream (should be complete)
+        let result = stream.query_stream();
+        assert!(result.is_ok(), "Empty stream should report as complete");
+    }
 
     #[test]
     fn test_stream_create() {
