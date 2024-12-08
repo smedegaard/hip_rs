@@ -1,12 +1,135 @@
 use super::flags::DeviceMallocFlag;
-use super::{HipError, HipErrorKind, HipResult, Result};
+use super::{HipError, HipErrorKind, HipResult, Result, Stream};
 use crate::sys;
 
 /// A wrapper for device memory allocated on the GPU.
 /// Automatically frees the memory when dropped.
+#[derive(Debug, Clone)]
 pub struct MemoryPointer<T> {
     pointer: *mut T,
     size: usize,
+}
+
+#[derive(Debug, Clone)]
+pub struct MemPoolProps {
+    /// Allocation type (must be hipMemAllocationTypePinned)
+    pub alloc_type: MemAllocationType,
+    /// Handle types supported by allocations from the pool
+    pub handle_types: MemAllocationHandleType,
+    /// Location where allocations should reside
+    pub location: MemLocation,
+    /// Maximum pool size (0 = system dependent default)
+    pub max_size: usize,
+
+    /// Windows-specific security attributes (null for non-Windows)
+    #[cfg(target_os = "windows")]
+    pub win32_security_attributes: Option<*mut std::ffi::c_void>,
+}
+
+#[repr(u32)]
+#[derive(Debug, Clone, Copy)]
+pub enum MemAllocationType {
+    Invalid = 0,
+    Pinned = 1, // hipMemAllocationTypePinned
+}
+
+#[repr(u32)]
+#[derive(Debug, Clone, Copy)]
+pub enum MemAllocationHandleType {
+    None = 0,
+    PosixFileDescriptor = 1,
+    Win32 = 2,
+}
+
+#[repr(u32)]
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum MemLocationType {
+    Invalid = 0,
+    Device = 1,
+}
+
+#[derive(Debug, Clone)]
+pub struct MemLocation {
+    pub type_: MemLocationType, // Memory type (device, host, etc)
+    pub id: i32,                // Device ID or other identifier
+}
+
+impl Default for MemPoolProps {
+    fn default() -> Self {
+        Self {
+            alloc_type: MemAllocationType::Pinned,
+            handle_types: MemAllocationHandleType::PosixFileDescriptor,
+            location: MemLocation {
+                type_: MemLocationType::Device,
+                id: 0,
+            },
+            max_size: 0, // Use system default
+            #[cfg(target_os = "windows")]
+            win32_security_attributes: None,
+        }
+    }
+}
+
+impl MemPoolProps {
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    pub fn with_alloc_type(mut self, alloc_type: MemAllocationType) -> Self {
+        self.alloc_type = alloc_type;
+        self
+    }
+
+    pub fn with_handle_types(mut self, handle_types: MemAllocationHandleType) -> Self {
+        self.handle_types = handle_types;
+        self
+    }
+
+    pub fn with_location(mut self, type_: MemLocationType, id: i32) -> Self {
+        self.location = MemLocation { type_, id };
+        self
+    }
+
+    pub fn with_max_size(mut self, max_size: usize) -> Self {
+        self.max_size = max_size;
+        self
+    }
+
+    #[cfg(target_os = "windows")]
+    pub fn with_win32_security_attributes(mut self, attrs: *mut std::ffi::c_void) -> Self {
+        self.win32_security_attributes = Some(attrs);
+        self
+    }
+
+    /// Convert to the raw HIP hipMemPoolProps structure
+    pub(crate) fn to_sys_props(&self) -> sys::hipMemPoolProps {
+        let mut props: sys::hipMemPoolProps = unsafe { std::mem::zeroed() };
+
+        props.allocType = self.alloc_type as u32;
+        props.handleTypes = self.handle_types as u32;
+        props.location = sys::hipMemLocation {
+            type_: self.location.type_ as u32,
+            id: self.location.id,
+        };
+        props.maxSize = self.max_size;
+
+        #[cfg(target_os = "windows")]
+        {
+            props.win32SecurityAttributes = self
+                .win32_security_attributes
+                .unwrap_or(std::ptr::null_mut());
+        }
+
+        #[cfg(not(target_os = "windows"))]
+        {
+            props.win32SecurityAttributes = std::ptr::null_mut();
+        }
+
+        // Zero out reserved bytes as required by documentation
+        props.reserved = [0u8; 56];
+
+        props
+    }
 }
 
 /// Converts a typed pointer to a void pointer.
@@ -116,6 +239,31 @@ impl<T> MemoryPointer<T> {
         })
     }
 
+    /// Asynchronously allocates memory from a memory pool on a specified stream.
+    ///
+    /// # Arguments
+    /// * `size` - The size (in elements) of memory to allocate
+    /// * `stream` - The stream on which to perform the allocation
+    ///
+    /// # Returns
+    /// * `Ok(MemoryPointer<T>)` - Successfully allocated memory pointer
+    /// * `Err(HipError)` - If allocation fails
+    ///
+    /// # Examples
+    /// ```
+    /// use hip_rs::{Device, MemoryPointer, Stream};
+    ///
+    /// let device = Device::new(0);
+    /// let stream = Stream::create().unwrap();
+    ///
+    /// let ptr = MemoryPointer::<f32>::alloc_async(1024, &stream).unwrap();
+    /// ```
+    pub fn alloc_async(size: usize, stream: &Stream) -> Result<Self> {
+        Self::allocate_with_fn(size, |ptr, size| unsafe {
+            sys::hipMallocAsync(ptr, size, stream.handle())
+        })
+    }
+
     /// Returns the raw memory pointer.
     pub fn as_pointer(&self) -> *mut T {
         self.pointer
@@ -214,12 +362,26 @@ impl<T> Drop for MemoryPointer<T> {
 #[derive(Debug)]
 pub struct MemPool {
     handle: sys::hipMemPool_t,
+    props: MemPoolProps,
 }
 
 impl MemPool {
     /// Creates a new MemPool from a raw handle
     pub(crate) fn from_raw(handle: sys::hipMemPool_t) -> Self {
-        MemPool { handle }
+        Self {
+            handle,
+            props: MemPoolProps::default(),
+        }
+    }
+
+    pub fn create(props: MemPoolProps) -> Result<Self> {
+        let mut handle = std::ptr::null_mut();
+        let sys_props = props.to_sys_props();
+
+        unsafe {
+            let code = sys::hipMemPoolCreate(&mut handle, &sys_props);
+            (Self { handle, props }, code).to_result()
+        }
     }
 
     /// Returns true if the memory pool handle is null
@@ -230,6 +392,24 @@ impl MemPool {
     /// Gets the raw handle to the memory pool
     pub fn handle(&self) -> sys::hipMemPool_t {
         self.handle
+    }
+
+    /// Gets a reference to the pool properties
+    pub fn props(&self) -> &MemPoolProps {
+        &self.props
+    }
+}
+
+impl Drop for MemPool {
+    fn drop(&mut self) {
+        if !self.handle.is_null() {
+            unsafe {
+                let code = sys::hipMemPoolDestroy(self.handle);
+                if code != 0 {
+                    log::error!("Failed to destroy memory pool: {}", code);
+                }
+            }
+        }
     }
 }
 
@@ -276,6 +456,91 @@ mod tests {
     use super::*;
     use std::thread::sleep;
     use std::time::Duration;
+
+    #[test]
+    fn test_mempool_props_default() {
+        let props = MemPoolProps::default();
+        assert_eq!(props.alloc_type as u32, MemAllocationType::Pinned as u32);
+        assert_eq!(
+            props.handle_types as u32,
+            MemAllocationHandleType::PosixFileDescriptor as u32
+        );
+        assert_eq!(props.location.type_, MemLocationType::Device);
+        assert_eq!(props.location.id, 0);
+        assert_eq!(props.max_size, 0);
+    }
+
+    #[test]
+    fn test_mempool_props_builder() {
+        let props = MemPoolProps::new();
+
+        assert_eq!(props.alloc_type as u32, MemAllocationType::Pinned as u32);
+        assert_eq!(
+            props.handle_types as u32,
+            MemAllocationHandleType::PosixFileDescriptor as u32
+        );
+        assert_eq!(props.location.type_, MemLocationType::Device);
+        assert_eq!(props.location.id, 0);
+        assert_eq!(props.max_size, 0);
+    }
+
+    #[test]
+    fn test_mempool_create() {
+        // Create memory pool properties with explicit device location
+        let props = MemPoolProps::new()
+            .with_alloc_type(MemAllocationType::Pinned)
+            .with_handle_types(MemAllocationHandleType::PosixFileDescriptor)
+            .with_location(MemLocationType::Device, 0)
+            .with_max_size(0);
+
+        // Convert to sys props and print
+        let sys_props = props.to_sys_props();
+        println!("Raw MemPoolProps:");
+        println!("  allocType: {}", sys_props.allocType);
+        println!("  handleTypes: {}", sys_props.handleTypes);
+        println!("  location.type: {}", sys_props.location.type_);
+        println!("  location.id: {}", sys_props.location.id);
+        println!("  maxSize: {}", sys_props.maxSize);
+        println!(
+            "  win32SecurityAttributes: {:?}",
+            sys_props.win32SecurityAttributes
+        );
+        println!("  reserved: {:?}", sys_props.reserved);
+
+        let result = MemPool::create(props);
+        assert!(
+            result.is_ok(),
+            "Failed to create memory pool: {:?}",
+            result.unwrap_err()
+        );
+
+        let pool = result.unwrap();
+        assert!(!pool.is_null());
+    }
+
+    // #[test]
+    // fn test_mempool_drop() {
+    //     let props = MemPoolProps::new();
+    //     let pool = MemPool::create(props).unwrap();
+
+    //     // Just test that drop runs without panicking
+    //     drop(pool);
+    // }
+
+    #[test]
+    fn test_async_alloc() {
+        use super::Stream;
+
+        let stream = Stream::create().unwrap();
+
+        let size = 1024;
+        let result = MemoryPointer::<u32>::alloc_async(size, &stream);
+        assert!(result.is_ok());
+
+        let ptr = result.unwrap();
+        assert!(!ptr.pointer.is_null());
+        assert_eq!(ptr.size, size);
+    }
 
     #[test]
     fn test_memset() {
