@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0](https://github.com/smedegaard/hip-rs/compare/v0.1.1...v0.2.0) - 2024-12-09
+
+### Other
+
+- skip binding generationon docs.rs ([#139](https://github.com/smedegaard/hip-rs/pull/139))
+- add MemPool ([#138](https://github.com/smedegaard/hip-rs/pull/138))
+- add stream::query_stream(). closes 134 ([#135](https://github.com/smedegaard/hip-rs/pull/135))
+- closes 26. add Device::get_default_mem_pool() ([#133](https://github.com/smedegaard/hip-rs/pull/133))
+- add synchronize() ([#132](https://github.com/smedegaard/hip-rs/pull/132))
+- only run CI on PR ([#131](https://github.com/smedegaard/hip-rs/pull/131))
+- Update release.yaml ([#130](https://github.com/smedegaard/hip-rs/pull/130))
+- closes 112. add core::stream ([#128](https://github.com/smedegaard/hip-rs/pull/128))
+- rename runtime -> core ([#127](https://github.com/smedegaard/hip-rs/pull/127))
+
 ## [0.1.1](https://github.com/smedegaard/hip-rs/compare/v0.1.0...v0.1.1) - 2024-12-02
 
 ### Other
