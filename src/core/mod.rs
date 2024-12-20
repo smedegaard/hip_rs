@@ -1,6 +1,7 @@
 mod device;
 mod device_types;
 mod flags;
+mod hip_call;
 mod init;
 mod memory;
 mod result;
@@ -11,6 +12,7 @@ pub mod sys;
 pub use device::*;
 pub use device_types::*;
 pub use flags::*;
+pub use hip_call::*;
 pub use init::*;
 pub use memory::*;
 pub use result::*;
