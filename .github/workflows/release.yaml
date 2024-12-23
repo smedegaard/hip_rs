@@ -57,7 +57,7 @@ jobs:
               run: cargo doc --no-deps --document-private-items
             - name: Add index.html
               run: |
-                  echo '<meta http-equiv="refresh" content="0; url=your_crate_name/index.html">' > target/doc/index.html
+                  echo '<meta http-equiv="refresh" content="0; url=hip-rs/index.html">' > target/doc/index.html
             - name: Deploy
               uses: peaceiris/actions-gh-pages@v3
               with:
