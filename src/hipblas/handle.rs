@@ -1,5 +1,6 @@
+use super::Result;
+use crate::result::ResultExt;
 use crate::sys;
-use crate::{HipResult, Result};
 use std::fmt;
 
 /// A handle to a hipBLAS library context.

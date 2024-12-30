@@ -3,7 +3,7 @@ use crate::sys;
 #[repr(u32)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Operation {
-    None = 0,      // HIPBLAS_OP_N
+    None = 0,      // HIPBLAS_OP_N, Operate with the matrix.
     Transpose = 1, // HIPBLAS_OP_T
     Conjugate = 2, // HIPBLAS_OP_C
 }
@@ -18,33 +18,34 @@ impl From<Operation> for sys::hipblasOperation_t {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Status {
     Success = 0,
-    Handle = 1,
-    NotInitialized = 2,
+    NotInitialized = 1,
+    AllocationFailed = 2,
     InvalidValue = 3,
-    ArchMismatch = 4,
-    MappingError = 5,
-    ExecutionFailed = 6,
-    InternalError = 7,
-    NotSupported = 8,
-    MemoryError = 9,
-    AllocationFailed = 10,
+    MappingError = 4,
+    ExecutionFailed = 5,
+    InternalError = 6,
+    NotSupported = 7,
+    ArchMismatch = 8,
+    HandleIsNullPointer = 9,
+    InvalidEnum = 10,
+    Unknown = 11, // back-end returned an unsupported status code
 }
 
 impl From<sys::hipblasStatus_t> for Status {
     fn from(status: sys::hipblasStatus_t) -> Self {
         match status {
             0 => Status::Success,
-            1 => Status::Handle,
-            2 => Status::NotInitialized,
+            1 => Status::NotInitialized,
+            2 => Status::AllocationFailed,
             3 => Status::InvalidValue,
-            4 => Status::ArchMismatch,
-            5 => Status::MappingError,
-            6 => Status::ExecutionFailed,
-            7 => Status::InternalError,
-            8 => Status::NotSupported,
-            9 => Status::MemoryError,
-            10 => Status::AllocationFailed,
-            _ => Status::InternalError,
+            4 => Status::MappingError,
+            5 => Status::ExecutionFailed,
+            6 => Status::InternalError,
+            7 => Status::NotSupported,
+            8 => Status::ArchMismatch,
+            9 => Status::HandleIsNullPointer,
+            10 => Status::InvalidEnum,
+            _ => Status::Unknown,
         }
     }
 }

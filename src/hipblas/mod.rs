@@ -1,7 +1,9 @@
+mod gemm;
 mod handle;
+mod result;
 mod types;
 
-use crate::sys;
-
+pub use gemm::*;
 pub use handle::*;
+pub use result::*;
 pub use types::*;

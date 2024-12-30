@@ -1,23 +1,9 @@
-use std::fmt;
+use crate::result::{ResultExt, StatusCode};
 
-/// Success code from HIP runtime
 #[repr(u32)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum HipSuccess {
+pub enum HipStatus {
     Success = 0,
-}
-
-impl HipSuccess {
-    pub fn new() -> Self {
-        Self::Success
-    }
-}
-
-/// Error codes from HIP runtime
-/// https://rocm.docs.amd.com/projects/HIP/en/latest/doxygen/html/hip__runtime__api_8h.html#a657deda9809cdddcbfcd336a29894635
-#[repr(u32)]
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum HipErrorKind {
     InvalidValue = 1,
     MemoryAllocation = 2,
     NotInitialized = 3,
@@ -29,73 +15,136 @@ pub enum HipErrorKind {
     Unknown = 999,
 }
 
-impl HipErrorKind {
-    /// Convert from raw HIP error code to HipErrorKind
-    pub fn from_raw(error: u32) -> Self {
-        match error {
-            1 => HipErrorKind::InvalidValue,
-            2 => HipErrorKind::MemoryAllocation,
-            3 => HipErrorKind::NotInitialized,
-            4 => HipErrorKind::Deinitialized,
-            101 => HipErrorKind::InvalidDevice,
-            301 => HipErrorKind::FileNotFound,
-            600 => HipErrorKind::NotReady,
-            801 => HipErrorKind::NotSupported,
-            _ => HipErrorKind::Unknown,
+impl HipStatus {
+    fn from(status: u32) -> Self {
+        match status {
+            0 => HipStatus::Success,
+            1 => HipStatus::InvalidValue,
+            2 => HipStatus::MemoryAllocation,
+            3 => HipStatus::NotInitialized,
+            4 => HipStatus::Deinitialized,
+            101 => HipStatus::InvalidDevice,
+            301 => HipStatus::FileNotFound,
+            600 => HipStatus::NotReady,
+            801 => HipStatus::NotSupported,
+            _ => HipStatus::Unknown,
         }
     }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct HipError {
-    pub kind: HipErrorKind,
+    pub status: HipStatus,
     pub code: u32,
 }
 
 impl HipError {
-    pub fn new(code: u32) -> Self {
+    pub(crate) fn new(code: u32) -> Self {
         Self {
-            kind: HipErrorKind::from_raw(code),
+            status: HipStatus::from(code),
             code,
         }
     }
 
-    pub fn from_kind(kind: HipErrorKind) -> Self {
+    pub fn from_status(status: HipStatus) -> Self {
         Self {
-            kind,
-            code: kind as u32,
+            status,
+            code: status as u32,
         }
     }
 }
 
-impl fmt::Display for HipError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "HIP error: {:?} (code: {})", self.kind, self.code)
+impl StatusCode for HipError {
+    fn is_success(&self) -> bool {
+        self.status == HipStatus::Success
+    }
+
+    fn code(&self) -> u32 {
+        self.code as u32
+    }
+
+    fn kind_str(&self) -> &'static str {
+        "HIP"
+    }
+
+    fn status_str(&self) -> &'static str {
+        match self.status {
+            HipStatus::Success => "Success",
+            HipStatus::InvalidValue => "InvalidValue",
+            HipStatus::MemoryAllocation => "MemoryAllocation",
+            HipStatus::NotInitialized => "NotInitialized",
+            HipStatus::Deinitialized => "Deinitialized",
+            HipStatus::InvalidDevice => "InvalidDevice",
+            HipStatus::FileNotFound => "FileNotFound",
+            HipStatus::NotReady => "NotReady",
+            HipStatus::NotSupported => "NotSupported",
+            HipStatus::Unknown => "Unknown",
+        }
     }
 }
 
-impl std::error::Error for HipError {}
+pub type HipResult<T> = std::result::Result<T, HipError>;
 
-pub type Result<T> = std::result::Result<T, HipError>;
-
-/// Trait for checking HIP operation results
-pub trait HipResult {
-    /// The successful value type
-    type Value;
-
-    /// Convert HIP result to Result type
-    fn to_result(self) -> Result<Self::Value>;
-}
-
-/// Implement for tuple of (value, error_code)
-impl<T> HipResult for (T, u32) {
+impl<T> ResultExt<T, HipError> for (T, u32) {
     type Value = T;
+    fn to_result(self) -> HipResult<T> {
+        let (value, status) = self;
+        (value, HipError::new(status)).to_result()
+    }
+}
 
-    fn to_result(self) -> Result<T> {
-        let (value, code) = self;
-        match code {
-            0 => Ok(value),
-            _ => Err(HipError::new(code)),
-        }
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_hip_status_from() {
+        assert_eq!(HipStatus::from(0), HipStatus::Success);
+        assert_eq!(HipStatus::from(1), HipStatus::InvalidValue);
+        assert_eq!(HipStatus::from(2), HipStatus::MemoryAllocation);
+        assert_eq!(HipStatus::from(3), HipStatus::NotInitialized);
+        assert_eq!(HipStatus::from(4), HipStatus::Deinitialized);
+        assert_eq!(HipStatus::from(101), HipStatus::InvalidDevice);
+        assert_eq!(HipStatus::from(301), HipStatus::FileNotFound);
+        assert_eq!(HipStatus::from(600), HipStatus::NotReady);
+        assert_eq!(HipStatus::from(801), HipStatus::NotSupported);
+        assert_eq!(HipStatus::from(1000), HipStatus::Unknown);
+    }
+
+    #[test]
+    fn test_hip_error_new() {
+        let error = HipError::new(1);
+        assert_eq!(error.status, HipStatus::InvalidValue);
+        assert_eq!(error.code, 1);
+    }
+
+    #[test]
+    fn test_hip_error_from_status() {
+        let error = HipError::from_status(HipStatus::InvalidValue);
+        assert_eq!(error.status, HipStatus::InvalidValue);
+        assert_eq!(error.code, 1);
+    }
+
+    #[test]
+    fn test_hip_error_status_code() {
+        let error = HipError::new(0);
+        assert!(error.is_success());
+        assert_eq!(error.code(), 0);
+        assert_eq!(error.kind_str(), "HIP");
+
+        let error = HipError::new(1);
+        assert!(!error.is_success());
+        assert_eq!(error.code(), 1);
+    }
+
+    #[test]
+    fn test_result_ext() {
+        let success: HipResult<i32> = (42, 0).to_result();
+        assert!(success.is_ok());
+        assert_eq!(success.unwrap(), 42);
+
+        let error: HipResult<i32> = (42, 1).to_result();
+        assert!(error.is_err());
+        assert_eq!(error.unwrap_err().code, 1);
     }
 }
