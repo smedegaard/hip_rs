@@ -1,4 +1,5 @@
-use super::{sys, HipResult, Result};
+use super::{HipResult, Result};
+use crate::sys;
 
 #[macro_export]
 macro_rules! hip_call {

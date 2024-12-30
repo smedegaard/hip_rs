@@ -1,5 +1,5 @@
-use super::sys;
 use super::{DeviceP2PAttribute, HipError, HipErrorKind, HipResult, MemPool, PCIBusId, Result};
+use crate::sys;
 use semver::Version;
 use std::ffi::CStr;
 use std::i32;

@@ -6,8 +6,8 @@ mod init;
 mod memory;
 mod result;
 mod stream;
-pub mod sys;
 
+// use crate::sys::*;
 // Re-export core functionality
 pub use device::*;
 pub use device_types::*;

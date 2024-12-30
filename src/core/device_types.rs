@@ -1,5 +1,5 @@
-use super::sys;
 use super::{HipError, HipErrorKind, HipResult, Result};
+use crate::sys;
 use std::ffi::CStr;
 use std::i32;
 
