@@ -1,5 +1,6 @@
 use super::{BlasHandle, Operation, Result};
 use crate::result::ResultExt;
+use crate::Complex32;
 use crate::{sys, MemoryPointer};
 
 /// Trait for types supported by GEMM operations
@@ -23,6 +24,7 @@ pub trait GemmDatatype {
     ) -> sys::hipblasStatus_t;
 }
 
+// u16
 impl GemmDatatype for sys::hipblasHalf {
     unsafe fn hipblas_gemm(
         handle: sys::hipblasHandle_t,
@@ -92,7 +94,7 @@ impl GemmDatatype for f64 {
     }
 }
 
-impl GemmDatatype for sys::hipblasComplex {
+impl GemmDatatype for Complex32 {
     unsafe fn hipblas_gemm(
         handle: sys::hipblasHandle_t,
         trans_a: sys::hipblasOperation_t,
@@ -109,8 +111,16 @@ impl GemmDatatype for sys::hipblasComplex {
         c: *mut Self,
         ldc: i32,
     ) -> sys::hipblasStatus_t {
+        // Convert Complex32 pointers to hipblasComplex pointers
+        let alpha_ptr = alpha as *const sys::hipblasComplex;
+        let a_ptr = a as *const sys::hipblasComplex;
+        let b_ptr = b as *const sys::hipblasComplex;
+        let beta_ptr = beta as *const sys::hipblasComplex;
+        let c_ptr = c as *mut sys::hipblasComplex;
+
         sys::hipblasCgemm(
-            handle, trans_a, trans_b, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc,
+            handle, trans_a, trans_b, m, n, k, alpha_ptr, a_ptr, lda, b_ptr, ldb, beta_ptr, c_ptr,
+            ldc,
         )
     }
 }
@@ -198,6 +208,8 @@ pub fn gemm<T: GemmDatatype>(
 
 #[cfg(test)]
 mod tests {
+    use crate::Complex32;
+
     use super::*;
 
     #[test]
@@ -306,12 +318,12 @@ mod tests {
         let n = 2;
         let k = 2;
 
-        let a = MemoryPointer::<sys::hipblasComplex>::alloc(m as usize * k as usize).unwrap();
-        let b = MemoryPointer::<sys::hipblasComplex>::alloc(k as usize * n as usize).unwrap();
-        let mut c = MemoryPointer::<sys::hipblasComplex>::alloc(m as usize * n as usize).unwrap();
+        let a = MemoryPointer::<Complex32>::alloc(m as usize * k as usize).unwrap();
+        let b = MemoryPointer::<Complex32>::alloc(k as usize * n as usize).unwrap();
+        let mut c = MemoryPointer::<Complex32>::alloc(m as usize * n as usize).unwrap();
 
-        let alpha = sys::hipblasComplex { x: 1.0, y: 0.0 };
-        let beta = sys::hipblasComplex { x: 0.0, y: 0.0 };
+        let alpha = Complex32::new(1.0, 0.0);
+        let beta = Complex32::new(0.0, 0.0);
 
         let result = gemm(
             &handle,

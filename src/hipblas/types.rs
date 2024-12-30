@@ -49,3 +49,80 @@ impl From<sys::hipblasStatus_t> for Status {
         }
     }
 }
+
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct Complex32 {
+    inner: sys::hipblasComplex,
+}
+
+impl Complex32 {
+    /// Creates a new complex number from real and imaginary parts
+    pub fn new(r: f32, i: f32) -> Self {
+        Self {
+            inner: sys::hipblasComplex { x: r, y: i },
+        }
+    }
+
+    /// Returns the real part
+    pub fn real(&self) -> f32 {
+        self.inner.x
+    }
+
+    /// Returns the imaginary part
+    pub fn imag(&self) -> f32 {
+        self.inner.y
+    }
+
+    /// Returns the complex conjugate
+    pub fn conj(&self) -> Self {
+        Self::new(self.real(), -self.imag())
+    }
+
+    /// Returns the magnitude (absolute value) of the complex number
+    pub fn abs(&self) -> f32 {
+        (self.real() * self.real() + self.imag() * self.imag()).sqrt()
+    }
+
+    /// Returns the argument (phase) of the complex number in radians
+    pub fn arg(&self) -> f32 {
+        self.imag().atan2(self.real())
+    }
+}
+
+impl From<sys::hipblasComplex> for Complex32 {
+    fn from(c: sys::hipblasComplex) -> Self {
+        Self { inner: c }
+    }
+}
+
+impl From<Complex32> for sys::hipblasComplex {
+    fn from(c: Complex32) -> Self {
+        c.inner
+    }
+}
+
+impl Default for Complex32 {
+    fn default() -> Self {
+        Self::new(0.0, 0.0)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_complex_creation() {
+        let c = Complex32::new(1.0, 2.0);
+        assert_eq!(c.real(), 1.0);
+        assert_eq!(c.imag(), 2.0);
+    }
+
+    #[test]
+    fn test_complex_conjugate() {
+        let c = Complex32::new(1.0, 2.0);
+        let conj = c.conj();
+        assert_eq!(conj.real(), 1.0);
+        assert_eq!(conj.imag(), -2.0);
+    }
+}
