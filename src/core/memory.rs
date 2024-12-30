@@ -1,6 +1,8 @@
 use super::flags::DeviceMallocFlag;
-use super::{HipError, HipErrorKind, HipResult, Result, Stream};
+use super::result::{HipError, HipResult, HipStatus};
+use crate::result::ResultExt;
 use crate::sys;
+use crate::Stream;
 
 /// A wrapper for device memory allocated on the GPU.
 /// Automatically frees the memory when dropped.
@@ -166,7 +168,7 @@ unsafe fn memory_copy(
     src: *const std::ffi::c_void,
     size: usize,
     kind: MemoryCopyKind,
-) -> Result<()> {
+) -> HipResult<()> {
     let code = sys::hipMemcpy(dst, src, size, kind.into());
     ((), code).to_result()
 }
@@ -176,7 +178,7 @@ impl<T> MemoryPointer<T> {
     /// memory allocation functions.
     ///
     /// Takes the size to allocate and
-    fn allocate_with_fn<F>(size: usize, alloc_fn: F) -> Result<Self>
+    fn allocate_with_fn<F>(size: usize, alloc_fn: F) -> HipResult<Self>
     where
         F: FnOnce(*mut *mut std::ffi::c_void, usize) -> u32,
     {
@@ -214,7 +216,7 @@ impl<T> MemoryPointer<T> {
     /// * `Ok(MemoryPointer)` - Handle to allocated device memory
     /// * `Err(HipError)` - Error occurred during allocation
     /// ```
-    pub fn alloc(size: usize) -> Result<Self> {
+    pub fn alloc(size: usize) -> HipResult<Self> {
         Self::allocate_with_fn(size, |ptr, size| unsafe { sys::hipMalloc(ptr, size) })
     }
 
@@ -233,7 +235,7 @@ impl<T> MemoryPointer<T> {
     /// * If size is 0, returns null pointer with success status
     /// * Invalid flags will result in hipErrorInvalidValue error
     ///
-    pub fn alloc_with_flag(size: usize, flag: DeviceMallocFlag) -> Result<Self> {
+    pub fn alloc_with_flag(size: usize, flag: DeviceMallocFlag) -> HipResult<Self> {
         Self::allocate_with_fn(size, |ptr, size| unsafe {
             sys::hipExtMallocWithFlags(ptr, size, flag.bits())
         })
@@ -258,7 +260,7 @@ impl<T> MemoryPointer<T> {
     ///
     /// let ptr = MemoryPointer::<f32>::alloc_async(1024, &stream).unwrap();
     /// ```
-    pub fn alloc_async(size: usize, stream: &Stream) -> Result<Self> {
+    pub fn alloc_async(size: usize, stream: &Stream) -> HipResult<Self> {
         Self::allocate_with_fn(size, |ptr, size| unsafe {
             sys::hipMallocAsync(ptr, size, stream.handle())
         })
@@ -288,15 +290,15 @@ impl<T> MemoryPointer<T> {
     /// - Checks that neither pointer is null
     /// - Validates that destination has sufficient size
     /// - Ensures proper size alignment
-    pub fn copy_to(&self, destination: &MemoryPointer<T>, kind: MemoryCopyKind) -> Result<()> {
+    pub fn copy_to(&self, destination: &MemoryPointer<T>, kind: MemoryCopyKind) -> HipResult<()> {
         // Check for null pointers
         if self.pointer.is_null() || destination.pointer.is_null() {
-            return Err(HipError::from_kind(HipErrorKind::InvalidValue));
+            return Err(HipError::from_status(HipStatus::InvalidValue));
         }
 
         // Check that destination has sufficient size
         if destination.size < self.size {
-            return Err(HipError::from_kind(HipErrorKind::InvalidValue));
+            return Err(HipError::from_status(HipStatus::InvalidValue));
         }
 
         // Calculate total bytes to copy
@@ -319,7 +321,7 @@ impl<T> MemoryPointer<T> {
     /// * `size` - Number of bytes to fill. Must not exceed the allocated size.
     ///
     /// # Returns
-    /// * `Result<()>` - Success or error status
+    /// * `HipResult<()>` - Success or error status
     ///
     /// # Examples
     /// ```
@@ -328,10 +330,10 @@ impl<T> MemoryPointer<T> {
     /// let mut ptr = MemoryPointer::<u8>::alloc(1024).unwrap();
     /// ptr.memset(0, 1024).unwrap(); // Zero-initialize memory
     /// ```
-    pub fn memset(&self, value: u8, size: usize) -> Result<()> {
+    pub fn memset(&self, value: u8, size: usize) -> HipResult<()> {
         // Validate size doesn't exceed allocation
         if size > self.size {
-            return Err(HipError::from_kind(HipErrorKind::InvalidValue));
+            return Err(HipError::from_status(HipStatus::InvalidValue));
         }
 
         if size == 0 {
@@ -352,7 +354,7 @@ impl<T> Drop for MemoryPointer<T> {
             let code = sys::hipFree(self.pointer as *mut std::ffi::c_void);
             if code != 0 {
                 let error = HipError::new(code);
-                log::error!("MemoryPointer failed to free memory: {}", error);
+                log::error!("MemoryPointer failed to free memory: {:?}", error);
             }
         }
     }
@@ -374,7 +376,7 @@ impl MemPool {
         }
     }
 
-    pub fn create(props: MemPoolProps) -> Result<Self> {
+    pub fn create(props: MemPoolProps) -> HipResult<Self> {
         let mut handle = std::ptr::null_mut();
         let sys_props = props.to_sys_props();
 
@@ -437,7 +439,7 @@ impl From<MemoryCopyKind> for u32 {
 impl TryFrom<sys::hipMemcpyKind> for MemoryCopyKind {
     type Error = HipError;
 
-    fn try_from(value: sys::hipMemcpyKind) -> Result<Self> {
+    fn try_from(value: sys::hipMemcpyKind) -> HipResult<Self> {
         match value {
             0 => Ok(Self::HostToHost),
             1 => Ok(Self::HostToDevice),
@@ -445,7 +447,7 @@ impl TryFrom<sys::hipMemcpyKind> for MemoryCopyKind {
             3 => Ok(Self::DeviceToDevice),
             4 => Ok(Self::Default),
             1024 => Ok(Self::DeviceToDeviceNoCU),
-            _ => Err(HipError::from_kind(HipErrorKind::InvalidValue)),
+            _ => Err(HipError::from_status(HipStatus::InvalidValue)),
         }
     }
 }

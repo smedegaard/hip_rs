@@ -1,4 +1,6 @@
-use super::{DeviceP2PAttribute, HipError, HipErrorKind, HipResult, MemPool, PCIBusId, Result};
+use super::result::{HipError, HipResult, HipStatus};
+use super::{DeviceP2PAttribute, MemPool, PCIBusId};
+use crate::result::ResultExt;
 use crate::sys;
 use semver::Version;
 use std::ffi::CStr;
@@ -42,7 +44,7 @@ impl Device {
     /// # Returns
     /// * `Result<Version>` - On success, returns a `Version` struct containing the major and minor version
     ///   numbers of the device's compute capability. On failure, returns an error indicating what went wrong.
-    pub fn device_compute_capability(&self) -> Result<Version> {
+    pub fn device_compute_capability(&self) -> HipResult<Version> {
         unsafe {
             let mut major: i32 = -1;
             let mut minor: i32 = -1;
@@ -61,7 +63,7 @@ impl Device {
     /// Returns `HipError` if:
     /// * The device is invalid
     /// * The runtime is not initialized
-    pub fn device_total_mem(&self) -> Result<usize> {
+    pub fn device_total_mem(&self) -> HipResult<usize> {
         unsafe {
             let mut size: usize = 0;
             let code = sys::hipDeviceTotalMem(&mut size, self.id);
@@ -80,7 +82,7 @@ impl Device {
     /// * The device ID is invalid
     /// * There was an error retrieving the device name
     /// * The name string could not be converted to valid UTF-8
-    pub fn get_device_name(&self) -> Result<String> {
+    pub fn get_device_name(&self) -> HipResult<String> {
         const buffer_size: usize = 64;
         let mut buffer = vec![0i8; buffer_size];
 
@@ -105,7 +107,7 @@ impl Device {
     /// * The device is invalid
     /// * The runtime is not initialized
     /// * There was an error retrieving the UUID
-    fn get_device_uuid_bytes(&self) -> Result<[i8; 16]> {
+    fn get_device_uuid_bytes(&self) -> HipResult<[i8; 16]> {
         let mut hip_bytes = sys::hipUUID_t { bytes: [0; 16] };
         unsafe {
             let code = sys::hipDeviceGetUuid(&mut hip_bytes, self.id);
@@ -128,7 +130,7 @@ impl Device {
     /// * The device is invalid
     /// * The runtime is not initialized
     /// * There was an error retrieving the UUID
-    pub fn get_device_uuid(&self) -> Result<Uuid> {
+    pub fn get_device_uuid(&self) -> HipResult<Uuid> {
         Self::get_device_uuid_bytes(self).map(|bytes| {
             let uuid_bytes: [u8; 16] = bytes.map(|b| b as u8);
             Uuid::from_bytes(uuid_bytes)
@@ -148,7 +150,7 @@ impl Device {
     /// * The device is invalid
     /// * The runtime is not initialized
     /// * There was an error retrieving the PCI bus ID
-    pub fn get_device_pci_bus_id(&self) -> Result<PCIBusId> {
+    pub fn get_device_pci_bus_id(&self) -> HipResult<PCIBusId> {
         let mut pci_bus_id = PCIBusId::new();
         unsafe {
             let code =
@@ -167,7 +169,7 @@ impl Device {
     /// * The device ID is invalid
     /// * The operation is not supported on this device/platform
     /// * There was an error retrieving the memory pool
-    pub fn get_default_mem_pool(&self) -> Result<MemPool> {
+    pub fn get_default_mem_pool(&self) -> HipResult<MemPool> {
         let mut mem_pool = std::ptr::null_mut();
         unsafe {
             let code = sys::hipDeviceGetDefaultMemPool(&mut mem_pool, self.id);
@@ -191,7 +193,7 @@ impl Device {
 /// Returns `HipError` if:
 /// * No device is currently active
 /// * The HIP runtime is not initialized
-pub fn synchronize() -> Result<()> {
+pub fn synchronize() -> HipResult<()> {
     unsafe {
         let code = sys::hipDeviceSynchronize();
         ((), code).to_result()
@@ -207,7 +209,7 @@ pub fn synchronize() -> Result<()> {
 /// Returns `HipError` if:
 /// * The runtime is not initialized (`HipErrorKind::NotInitialized`)
 /// * The operation fails for other reasons
-pub fn get_device_count() -> Result<i32> {
+pub fn get_device_count() -> HipResult<i32> {
     unsafe {
         let mut count = 0;
         let code = sys::hipGetDeviceCount(&mut count);
@@ -239,7 +241,7 @@ pub fn get_device_p2p_attribute(
     attr: DeviceP2PAttribute,
     src_device: Device,
     dst_device: Device,
-) -> Result<i32> {
+) -> HipResult<i32> {
     let mut value = -1;
     unsafe {
         let code =
@@ -260,7 +262,7 @@ pub fn get_device_p2p_attribute(
 /// * No device is currently active
 /// * HIP runtime is not initialized
 /// * There was an error accessing device information
-pub fn get_device() -> Result<Device> {
+pub fn get_device() -> HipResult<Device> {
     unsafe {
         let mut device_id: i32 = -1;
         let code = sys::hipGetDevice(&mut device_id);
@@ -285,7 +287,7 @@ pub fn get_device() -> Result<Device> {
 /// * The device ID is invalid (greater than or equal to device count)
 /// * The HIP runtime is not initialized
 /// * The specified device has encountered a previous error and is in a broken state
-pub fn set_device(device: Device) -> Result<Device> {
+pub fn set_device(device: Device) -> HipResult<Device> {
     unsafe {
         let code = sys::hipSetDevice(device.id);
         (device, code).to_result()
@@ -305,7 +307,7 @@ pub fn set_device(device: Device) -> Result<Device> {
 /// * The PCI bus ID string is invalid
 /// * No device with the specified PCI bus ID exists
 /// * The runtime is not initialized
-pub fn get_device_by_pci_bus_id(mut pci_bus_id: PCIBusId) -> Result<Device> {
+pub fn get_device_by_pci_bus_id(mut pci_bus_id: PCIBusId) -> HipResult<Device> {
     let mut device_id = i32::MAX;
     unsafe {
         let code = sys::hipDeviceGetByPCIBusId(&mut device_id, pci_bus_id.as_mut_ptr());
@@ -330,7 +332,7 @@ mod tests {
             }
             Err(e) => {
                 // Check if the error is "not supported" which is acceptable
-                if e.kind != HipErrorKind::NotSupported {
+                if e.status != HipStatus::NotSupported {
                     panic!("Unexpected error getting default memory pool: {:?}", e);
                 }
                 println!("Memory pools not supported on this device/platform");
@@ -369,7 +371,7 @@ mod tests {
         let invalid_device = Device::new(99);
         let result = invalid_device.get_device_pci_bus_id();
         assert!(result.is_err());
-        assert_eq!(result.unwrap_err().kind, HipErrorKind::InvalidDevice);
+        assert_eq!(result.unwrap_err().status, HipStatus::InvalidDevice);
     }
 
     #[test]
@@ -452,6 +454,6 @@ mod tests {
         let invalid_device = Device::new(99);
         let result = set_device(invalid_device);
         assert!(result.is_err());
-        assert_eq!(result.unwrap_err().kind, HipErrorKind::InvalidDevice);
+        assert_eq!(result.unwrap_err().status, HipStatus::InvalidDevice);
     }
 }
