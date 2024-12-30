@@ -1,4 +1,4 @@
-use super::sys;
+use crate::sys;
 use crate::{HipResult, Result};
 use semver::Version;
 use std::i32;
