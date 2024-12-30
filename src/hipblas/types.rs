@@ -3,9 +3,9 @@ use crate::sys;
 #[repr(u32)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Operation {
-    None = 0,      // HIPBLAS_OP_N, Operate with the matrix.
-    Transpose = 1, // HIPBLAS_OP_T
-    Conjugate = 2, // HIPBLAS_OP_C
+    None = 111,      // HIPBLAS_OP_N, Operate with the matrix.
+    Transpose = 112, // HIPBLAS_OP_T
+    Conjugate = 113, // HIPBLAS_OP_C
 }
 
 impl From<Operation> for sys::hipblasOperation_t {

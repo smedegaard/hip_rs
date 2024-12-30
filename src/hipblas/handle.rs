@@ -120,13 +120,6 @@ mod tests {
     }
 
     #[test]
-    fn test_handle_clone_not_implemented() {
-        let handle = BlasHandle::new().unwrap();
-        // This should fail to compile if you try to uncomment it
-        // let _cloned = handle.clone();
-    }
-
-    #[test]
     fn test_handle_send_sync() {
         // Test that handle can be sent between threads
         let handle = BlasHandle::new().unwrap();

@@ -201,10 +201,41 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_sgemm_simple() {
+    fn test_hgemm() {
         let handle = BlasHandle::new().unwrap();
+        let m = 2;
+        let n = 2;
+        let k = 2;
 
-        // Create test matrices on device
+        let a = MemoryPointer::<sys::hipblasHalf>::alloc(m as usize * k as usize).unwrap();
+        let b = MemoryPointer::<sys::hipblasHalf>::alloc(k as usize * n as usize).unwrap();
+        let mut c = MemoryPointer::<sys::hipblasHalf>::alloc(m as usize * n as usize).unwrap();
+
+        let alpha = 1.0 as u16; // 1.0 in half precision
+        let beta = 0.0 as u16; // 0.0 in half precision
+
+        let result = gemm(
+            &handle,
+            Operation::None,
+            Operation::None,
+            m,
+            n,
+            k,
+            &alpha,
+            &a,
+            m,
+            &b,
+            k,
+            &beta,
+            &mut c,
+            m,
+        );
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_sgemm() {
+        let handle = BlasHandle::new().unwrap();
         let m = 2;
         let n = 2;
         let k = 2;
@@ -232,7 +263,139 @@ mod tests {
             &mut c,
             m,
         );
-        assert!(result.unwrap() == ());
-        assert!(result.is_ok(), "gemm failed");
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_dgemm() {
+        let handle = BlasHandle::new().unwrap();
+        let m = 2;
+        let n = 2;
+        let k = 2;
+
+        let a = MemoryPointer::<f64>::alloc(m as usize * k as usize).unwrap();
+        let b = MemoryPointer::<f64>::alloc(k as usize * n as usize).unwrap();
+        let mut c = MemoryPointer::<f64>::alloc(m as usize * n as usize).unwrap();
+
+        let alpha: f64 = 1.0;
+        let beta: f64 = 0.0;
+
+        let result = gemm(
+            &handle,
+            Operation::None,
+            Operation::None,
+            m,
+            n,
+            k,
+            &alpha,
+            &a,
+            m,
+            &b,
+            k,
+            &beta,
+            &mut c,
+            m,
+        );
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_cgemm() {
+        let handle = BlasHandle::new().unwrap();
+        let m = 2;
+        let n = 2;
+        let k = 2;
+
+        let a = MemoryPointer::<sys::hipblasComplex>::alloc(m as usize * k as usize).unwrap();
+        let b = MemoryPointer::<sys::hipblasComplex>::alloc(k as usize * n as usize).unwrap();
+        let mut c = MemoryPointer::<sys::hipblasComplex>::alloc(m as usize * n as usize).unwrap();
+
+        let alpha = sys::hipblasComplex { x: 1.0, y: 0.0 };
+        let beta = sys::hipblasComplex { x: 0.0, y: 0.0 };
+
+        let result = gemm(
+            &handle,
+            Operation::None,
+            Operation::None,
+            m,
+            n,
+            k,
+            &alpha,
+            &a,
+            m,
+            &b,
+            k,
+            &beta,
+            &mut c,
+            m,
+        );
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_zgemm() {
+        let handle = BlasHandle::new().unwrap();
+        let m = 2;
+        let n = 2;
+        let k = 2;
+
+        let a = MemoryPointer::<sys::hipblasDoubleComplex>::alloc(m as usize * k as usize).unwrap();
+        let b = MemoryPointer::<sys::hipblasDoubleComplex>::alloc(k as usize * n as usize).unwrap();
+        let mut c =
+            MemoryPointer::<sys::hipblasDoubleComplex>::alloc(m as usize * n as usize).unwrap();
+
+        let alpha = sys::hipblasDoubleComplex { x: 1.0, y: 0.0 };
+        let beta = sys::hipblasDoubleComplex { x: 0.0, y: 0.0 };
+
+        let result = gemm(
+            &handle,
+            Operation::None,
+            Operation::None,
+            m,
+            n,
+            k,
+            &alpha,
+            &a,
+            m,
+            &b,
+            k,
+            &beta,
+            &mut c,
+            m,
+        );
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_gemm_error() {
+        let handle = BlasHandle::new().unwrap();
+        let m = -1; // Invalid dimension
+        let n = 2;
+        let k = 2;
+
+        let a = MemoryPointer::<f32>::alloc(4).unwrap();
+        let b = MemoryPointer::<f32>::alloc(4).unwrap();
+        let mut c = MemoryPointer::<f32>::alloc(4).unwrap();
+
+        let alpha: f32 = 1.0;
+        let beta: f32 = 0.0;
+
+        let result = gemm(
+            &handle,
+            Operation::None,
+            Operation::None,
+            m,
+            n,
+            k,
+            &alpha,
+            &a,
+            m,
+            &b,
+            k,
+            &beta,
+            &mut c,
+            m,
+        );
+        assert!(result.is_err());
     }
 }
