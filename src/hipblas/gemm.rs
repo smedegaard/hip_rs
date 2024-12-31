@@ -1,4 +1,4 @@
-use super::{BlasHandle, Operation, Result};
+use super::{BlasHandle, BlasResult, Operation};
 use crate::result::ResultExt;
 use crate::Complex32;
 use crate::{sys, MemoryPointer};
@@ -184,7 +184,7 @@ pub fn gemm<T: GemmDatatype>(
     beta: &T,
     c: &mut MemoryPointer<T>,
     ldc: i32,
-) -> Result<()> {
+) -> BlasResult<()> {
     unsafe {
         let code = T::hipblas_gemm(
             handle.handle(),

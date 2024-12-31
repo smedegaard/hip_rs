@@ -1,3 +1,4 @@
+#[allow(unused_imports)]
 use super::result::{HipError, HipResult, HipStatus};
 use super::{DeviceP2PAttribute, MemPool, PCIBusId};
 use crate::result::ResultExt;

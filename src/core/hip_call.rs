@@ -1,6 +1,9 @@
-use super::result::{HipResult, HipStatus};
-use crate::result::ResultExt;
-use crate::sys;
+#[allow(unused_imports)]
+use {
+    super::result::{HipResult, HipStatus},
+    crate::result::ResultExt,
+    crate::sys,
+};
 
 #[macro_export]
 macro_rules! hip_call {

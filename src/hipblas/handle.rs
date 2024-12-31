@@ -1,4 +1,4 @@
-use super::Result;
+use super::BlasResult;
 use crate::result::ResultExt;
 use crate::sys;
 use std::fmt;
@@ -42,7 +42,7 @@ impl BlasHandle {
     ///
     /// let handle = BlasHandle::new().unwrap();
     /// ```
-    pub fn new() -> Result<Self> {
+    pub fn new() -> BlasResult<Self> {
         let mut handle = std::ptr::null_mut();
         unsafe {
             let status = sys::hipblasCreate(&mut handle);

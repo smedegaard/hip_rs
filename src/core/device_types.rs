@@ -1,3 +1,4 @@
+#[allow(unused_imports)]
 use super::result::{HipError, HipResult, HipStatus};
 use crate::sys;
 use std::ffi::CStr;
