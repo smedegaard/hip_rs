@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.0](https://github.com/smedegaard/hip-rs/compare/v0.3.0...v0.4.0) - 2024-12-31
+
+### Other
+
+- docs ([#165](https://github.com/smedegaard/hip-rs/pull/165))
+- docs ([#162](https://github.com/smedegaard/hip-rs/pull/162))
+- 157 add blas call ([#158](https://github.com/smedegaard/hip-rs/pull/158))
+- 155 add gemm ([#156](https://github.com/smedegaard/hip-rs/pull/156))
+- 153 add hipblas ([#154](https://github.com/smedegaard/hip-rs/pull/154))
+
 ## [0.2.0](https://github.com/smedegaard/hip-rs/compare/v0.1.1...v0.2.0) - 2024-12-09
 
 ### Other
