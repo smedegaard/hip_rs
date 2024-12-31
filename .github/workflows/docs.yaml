@@ -15,7 +15,7 @@ env:
 
 jobs:
     test:
-        if: ${{ github.event.workflow_run.conclusion == 'success' }}
+        if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch' }}
         name: Test
         runs-on: self-hosted
         steps:
@@ -29,7 +29,7 @@ jobs:
               run: cargo test --all-features
 
     build_docs:
-        if: ${{ github.event.workflow_run.conclusion == 'success' }}
+        if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch' }}
         name: Build Docs
         runs-on: self-hosted
         needs: test
