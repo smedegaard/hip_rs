@@ -1,5 +1,7 @@
-use super::sys;
-use crate::{HipResult, Result};
+#[allow(unused_imports)]
+use super::result::{HipResult, HipStatus};
+pub use crate::result::ResultExt;
+use crate::sys;
 use semver::Version;
 use std::i32;
 
@@ -15,7 +17,7 @@ use std::i32;
 /// Returns `HipError` if:
 /// * The runtime fails to initialize
 /// * The runtime is already initialized
-pub fn initialize() -> Result<()> {
+pub fn initialize() -> HipResult<()> {
     unsafe {
         let code = sys::hipInit(0);
         ((), code).to_result()
@@ -50,7 +52,7 @@ fn decode_hip_version(version: i32) -> Version {
 /// Returns `HipError` if:
 /// * The runtime is not initialized
 /// * Getting the version fails
-pub fn runtime_get_version() -> Result<Version> {
+pub fn runtime_get_version() -> HipResult<Version> {
     unsafe {
         let mut version: i32 = -1;
         let code = sys::hipRuntimeGetVersion(&mut version);

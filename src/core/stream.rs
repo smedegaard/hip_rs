@@ -1,4 +1,7 @@
-use crate::{sys, HipError, HipResult, Result};
+#[allow(unused_imports)]
+use super::result::{HipResult, HipStatus};
+use crate::result::ResultExt;
+use crate::sys;
 
 /// A handle to a HIP stream that executes commands in order.
 #[derive(Debug)]
@@ -22,7 +25,7 @@ impl Stream {
     ///
     /// let stream = Stream::create().unwrap();
     /// ```
-    pub fn create() -> Result<Self> {
+    pub fn create() -> HipResult<Self> {
         let mut stream: sys::hipStream_t = std::ptr::null_mut();
         unsafe {
             let code = sys::hipStreamCreate(&mut stream);
@@ -49,7 +52,7 @@ impl Stream {
     /// * `Err(HipError)` - Either:
     ///   - `HipErrorKind::NotReady` if operations are still in progress
     ///   - `HipErrorKind::InvalidHandle` if the stream handle is invalid
-    pub fn query_stream(&self) -> Result<()> {
+    pub fn query_stream(&self) -> HipResult<()> {
         unsafe {
             let code = sys::hipStreamQuery(self.handle);
             ((), code).to_result()

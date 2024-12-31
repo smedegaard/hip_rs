@@ -1,5 +1,6 @@
-use super::sys;
-use super::{HipError, HipErrorKind, HipResult, Result};
+#[allow(unused_imports)]
+use super::result::{HipError, HipResult, HipStatus};
+use crate::sys;
 use std::ffi::CStr;
 use std::i32;
 
@@ -86,7 +87,7 @@ impl From<DeviceP2PAttribute> for u32 {
 impl TryFrom<u32> for DeviceP2PAttribute {
     type Error = HipError;
 
-    fn try_from(value: sys::hipDeviceP2PAttr) -> Result<Self> {
+    fn try_from(value: sys::hipDeviceP2PAttr) -> Result<Self, Self::Error> {
         match value {
             sys::hipDeviceP2PAttr_hipDevP2PAttrPerformanceRank => Ok(Self::PerformanceRank),
             sys::hipDeviceP2PAttr_hipDevP2PAttrAccessSupported => Ok(Self::AccessSupported),
@@ -96,7 +97,7 @@ impl TryFrom<u32> for DeviceP2PAttribute {
             sys::hipDeviceP2PAttr_hipDevP2PAttrHipArrayAccessSupported => {
                 Ok(Self::HipArrayAccessSupported)
             }
-            _ => Err(HipError::from_kind(HipErrorKind::InvalidValue)),
+            _ => Err(HipError::from_status(HipStatus::InvalidValue)),
         }
     }
 }

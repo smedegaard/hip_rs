@@ -1,10 +1,16 @@
-use super::{sys, HipResult, Result};
+#[allow(unused_imports)]
+use {
+    super::result::{HipResult, HipStatus},
+    crate::result::ResultExt,
+    crate::sys,
+};
 
 #[macro_export]
 macro_rules! hip_call {
     ($call:expr) => {{
-        let code = unsafe { $call };
-        ((), code).to_result()
+        let code: u32 = unsafe { $call };
+        let result: HipResult<()> = ((), code).to_result();
+        result
     }};
 }
 

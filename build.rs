@@ -12,6 +12,9 @@ fn main() {
         return;
     }
 
+    // link hipBLAS
+    println!("cargo:rustc-link-lib=dylib=hipblas");
+
     // Tell cargo when to rerun this build script
     println!("cargo:rerun-if-changed=src/core/sys/wrapper.h");
     println!("cargo:rerun-if-changed=build.rs");
@@ -38,7 +41,7 @@ fn main() {
 fn generate_bindings(hip_include_path: &str) {
     let out_path = PathBuf::from(env::var("OUT_DIR").unwrap());
     let bindings = bindgen::Builder::default()
-        .header("src/core/sys/wrapper.h")
+        .header("src/sys/wrapper.h")
         .clang_arg(&format!("-I{}", hip_include_path))
         .clang_arg("-D__HIP_PLATFORM_AMD__")
         // Blocklist problematic items
