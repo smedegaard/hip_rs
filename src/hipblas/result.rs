@@ -89,11 +89,11 @@ impl StatusCode for BlasError {
     }
 }
 
-pub type Result<T> = std::result::Result<T, BlasError>;
+pub type BlasResult<T> = std::result::Result<T, BlasError>;
 
 impl<T> ResultExt<T, BlasError> for (T, u32) {
     type Value = T;
-    fn to_result(self) -> Result<T> {
+    fn to_result(self) -> BlasResult<T> {
         let (value, status) = self;
         (value, BlasError::new(status)).to_result()
     }
@@ -151,8 +151,8 @@ mod tests {
 
     #[test]
     fn test_result_ext() {
-        let success: Result<i32> = (42, 0).to_result();
-        let error: Result<i32> = (42, 1).to_result();
+        let success: BlasResult<i32> = (42, 0).to_result();
+        let error: BlasResult<i32> = (42, 1).to_result();
 
         assert!(success.is_ok());
         assert!(error.is_err());

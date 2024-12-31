@@ -1,3 +1,4 @@
+#[allow(unused_imports)]
 use super::result::{HipResult, HipStatus};
 pub use crate::result::ResultExt;
 use crate::sys;

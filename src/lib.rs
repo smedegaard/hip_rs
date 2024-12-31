@@ -2,8 +2,9 @@
 mod core;
 mod hipblas;
 mod result;
-mod sys;
+pub mod sys;
 
 pub use core::*;
 pub use hipblas::*;
 pub use result::*;
+pub use sys::*;
