@@ -65,7 +65,7 @@ jobs:
             url: ${{ steps.deployment.outputs.page_url }}
         runs-on: self-hosted
         needs: build_docs
-        if: ${{ github.event.workflow_run.conclusion == 'success' }}
+        if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch' }}
         permissions:
             pages: write
             id-token: write
