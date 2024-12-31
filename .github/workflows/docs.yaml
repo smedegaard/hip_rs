@@ -1,0 +1,62 @@
+name: Docs
+
+on:
+    workflow_run:
+        workflows: ["Release"]
+        types:
+            - completed
+        branches: ["release"]
+
+env:
+    CARGO_TERM_COLOR: always
+
+jobs:
+    test:
+        if: ${{ github.event.workflow_run.conclusion == 'success' }}
+        name: Test
+        runs-on: self-hosted
+
+    build_docs:
+        if: ${{ github.event.workflow_run.conclusion == 'success' }}
+        name: Build Docs
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout repository
+              uses: actions/checkout@v4
+              with:
+                  ref: release
+            - name: Setup Rust
+              uses: dtolnay/rust-toolchain@stable
+            - name: Configure cache
+              uses: Swatinem/rust-cache@v2
+            - name: Setup pages
+              id: pages
+              uses: actions/configure-pages@v5
+            - name: Clean docs folder
+              run: cargo clean --doc
+            - name: Build docs
+              run: cargo doc --no-deps
+            - name: Add redirect
+              run: echo '<meta http-equiv="refresh" content="0;url=hip-rs/index.html">' > target/doc/index.html
+            - name: Remove lock file
+              run: rm target/doc/.lock
+            - name: Upload artifact
+              uses: actions/upload-pages-artifact@v3
+              with:
+                  path: target/doc
+
+    deploy_docs:
+        name: Deploy Docs
+        environment:
+            name: github-pages
+            url: ${{ steps.deployment.outputs.page_url }}
+        runs-on: ubuntu-latest
+        needs: build_docs
+        if: ${{ github.event.workflow_run.conclusion == 'success' }}
+        permissions:
+            pages: write
+            id-token: write
+        steps:
+            - name: Deploy to GitHub Pages
+              id: deployment
+              uses: actions/deploy-pages@v4
