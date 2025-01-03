@@ -1,4 +1,4 @@
-# hip-rs
+# hip_rs
 
 [![codecov](https://codecov.io/github/smedegaard/hip-rs/branch/main/graph/badge.svg?token=2J63ET3KII)](https://codecov.io/github/smedegaard/hip-rs)
 
@@ -12,4 +12,4 @@
 
 # Documentation
 
-[The documentation](https://smedegaard.github.io/hip-rs/) is built and deployed to the repo's Github Pages. 
+[The documentation](https://smedegaard.github.io/hip_rs/) is built and deployed to the repo's Github Pages.
