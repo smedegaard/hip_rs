@@ -1,9 +1,9 @@
 # hip_rs
 
-[![codecov](https://codecov.io/github/smedegaard/hip-rs/branch/main/graph/badge.svg?token=2J63ET3KII)](https://codecov.io/github/smedegaard/hip-rs)
+[![codecov](https://codecov.io/github/smedegaard/hip_rs/branch/main/graph/badge.svg?token=2J63ET3KII)](https://codecov.io/github/smedegaard/hip_rs)
 
 > [!CAUTION]
-> hip-rs is very experimental and *will* change a lot over time.
+> hip_rs is very experimental and *will* change a lot over time.
 
 # A rust wrapper for HIP.
 
