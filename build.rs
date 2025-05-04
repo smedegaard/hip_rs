@@ -16,7 +16,7 @@ fn main() {
     println!("cargo:rustc-link-lib=dylib=hipblas");
 
     // Tell cargo when to rerun this build script
-    println!("cargo:rerun-if-changed=src/core/sys/wrapper.h");
+    println!("cargo:rerun-if-changed=src/sys/wrapper.h");
     println!("cargo:rerun-if-changed=build.rs");
 
     // Set up HIP paths - making them configurable via environment variables
