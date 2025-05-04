@@ -1,6 +1,6 @@
 #[allow(unused_imports)]
 use super::result::{HipError, HipResult, HipStatus};
-use super::{DeviceP2PAttribute, MemPool, PCIBusId};
+use super::{DeviceAttribute, DeviceP2PAttribute, MemPool, PCIBusId};
 use crate::result::ResultExt;
 use crate::sys;
 use semver::Version;
@@ -175,6 +175,132 @@ impl Device {
         unsafe {
             let code = sys::hipDeviceGetDefaultMemPool(&mut mem_pool, self.id);
             (MemPool::from_raw(mem_pool), code).to_result()
+        }
+    }
+
+    /// Gets a specific attribute for this device.
+    ///
+    /// This function retrieves the specified attribute value for the device.
+    /// Different attributes provide various information about the device's capabilities,
+    /// limitations, and features.
+    ///
+    /// # Arguments
+    /// * `attr` - The [`DeviceAttribute`] to query
+    ///
+    /// # Returns
+    /// * `HipResult<i32>` - The attribute value if successful
+    ///
+    /// # Errors
+    /// Returns `HipError` if:
+    /// * The device ID is invalid
+    /// * The attribute is invalid
+    /// * The runtime is not initialized
+    ///
+    /// # Examples
+    /// ```
+    /// use hip_rs::{Device, DeviceAttribute};
+    ///
+    /// let device = Device::new(0);
+    /// let clock_rate = device.get_attribute(DeviceAttribute::ClockRate).unwrap();
+    /// println!("Device clock rate: {} kHz", clock_rate);
+    ///
+    /// let warp_size = device.get_attribute(DeviceAttribute::WarpSize).unwrap();
+    /// println!("Device warp size: {}", warp_size);
+    /// ```
+    pub fn get_attribute(&self, attr: DeviceAttribute) -> HipResult<i32> {
+        let mut value: i32 = 0;
+        unsafe {
+            let code = sys::hipDeviceGetAttribute(&mut value, attr.into(), self.id);
+            (value, code).to_result()
+        }
+    }
+
+    /// Resets the state of this device to a fresh state.
+    ///
+    /// # Safety and Synchronization
+    /// This function discards all streams created, memory allocated, kernels running, and events
+    /// created for the current device. The caller must ensure that no other thread is using the
+    /// device or any resources (streams, memory, kernels, events) associated with it.
+    ///
+    /// # Returns
+    /// * `Ok(())` if the reset was successful
+    /// * `Err(HipError)` if the operation failed
+    ///
+    /// # Errors
+    /// Returns `HipError` if:
+    /// * The device ID is invalid
+    /// * The runtime is not initialized
+    ///
+    /// # Examples
+    /// ```
+    /// use hip_rs::Device;
+    ///
+    /// let device = Device::new(0);
+    /// // ... perform device operations ...
+    ///
+    /// // Make sure no other threads are using this device before resetting
+    /// device.reset().unwrap();
+    /// ```
+    ///
+    /// # See Also
+    /// * [`Device::synchronize`](crate::synchronize)
+    pub fn reset(&self) -> HipResult<()> {
+        // First set this device as active
+        set_device(*self)?;
+
+        unsafe {
+            let code = sys::hipDeviceReset();
+            ((), code).to_result()
+        }
+    }
+
+    /// Sets the current memory pool for this device.
+    ///
+    /// The memory pool must be local to this device. When `hipMallocAsync` is called,
+    /// it allocates from the current memory pool of the provided stream's device.
+    /// By default, a device's current memory pool is its default memory pool.
+    ///
+    /// # Arguments
+    /// * `mem_pool` - The [`MemPool`] to set as the current memory pool for this device
+    ///
+    /// # Returns
+    /// * `Ok(())` if the memory pool was successfully set
+    /// * `Err(HipError)` if the operation failed
+    ///
+    /// # Errors
+    /// Returns `HipError` if:
+    /// * The device ID is invalid
+    /// * The memory pool is invalid
+    /// * The memory pool is not local to this device
+    /// * The operation is not supported on this device/platform
+    ///
+    /// # Note
+    /// * Use `hipMallocFromPoolAsync` for asynchronous memory allocations from a device
+    ///   different than the one the stream runs on.
+    /// * This functionality is marked as Beta in the HIP API and may change.
+    ///
+    /// # Examples
+    /// ```
+    /// use hip_rs::{Device, MemPool, MemPoolProps, MemLocationType};
+    ///
+    /// let device = Device::new(0);
+    ///
+    /// // Create a memory pool for the device
+    /// let props = MemPoolProps::new()
+    ///     .with_location(MemLocationType::Device, device.id());
+    /// let mem_pool = MemPool::create(props).unwrap();
+    ///
+    /// // Set as current memory pool for the device
+    /// device.set_mem_pool(&mem_pool).unwrap();
+    /// ```
+    ///
+    /// # See Also
+    /// * [`Device::get_default_mem_pool`](Device::get_default_mem_pool)
+    /// * [`MemPool::create`](crate::MemPool::create)
+    pub fn set_mem_pool(&self, mem_pool: &MemPool) -> HipResult<()> {
+        unsafe {
+            let code = sys::hipDeviceSetMemPool(self.id, mem_pool.handle());
+            ((), code).to_result()
         }
     }
 }
@@ -456,5 +582,102 @@ mod tests {
         let result = set_device(invalid_device);
         assert!(result.is_err());
         assert_eq!(result.unwrap_err().status, HipStatus::InvalidDevice);
+    }
+
+    #[test]
+    fn test_get_attribute() {
+        let device = Device::new(0);
+
+        // Test a few different attributes
+        let clock_rate = device.get_attribute(DeviceAttribute::ClockRate);
+        assert!(clock_rate.is_ok());
+        println!("Device clock rate: {} kHz", clock_rate.unwrap());
+
+        let total_global_mem = device.get_attribute(DeviceAttribute::TotalGlobalMem);
+        assert!(total_global_mem.is_ok());
+        println!("Device global memory: {} bytes", total_global_mem.unwrap());
+
+        let warp_size = device.get_attribute(DeviceAttribute::WarpSize);
+        assert!(warp_size.is_ok());
+        println!("Device warp size: {}", warp_size.unwrap());
+
+        let compute_major = device.get_attribute(DeviceAttribute::ComputeCapabilityMajor);
+        assert!(compute_major.is_ok());
+        let compute_minor = device.get_attribute(DeviceAttribute::ComputeCapabilityMinor);
+        assert!(compute_minor.is_ok());
+        println!(
+            "Compute capability: {}.{}",
+            compute_major.unwrap(),
+            compute_minor.unwrap()
+        );
+
+        let multiprocessor_count = device.get_attribute(DeviceAttribute::MultiprocessorCount);
+        assert!(multiprocessor_count.is_ok());
+        println!("Multiprocessor count: {}", multiprocessor_count.unwrap());
+    }
+
+    #[test]
+    fn test_get_attribute_invalid_device() {
+        let invalid_device = Device::new(99);
+        let result = invalid_device.get_attribute(DeviceAttribute::ClockRate);
+        assert!(result.is_err());
+        assert_eq!(result.unwrap_err().status, HipStatus::InvalidDevice);
+    }
+
+    #[test]
+    fn test_device_reset() {
+        let device = Device::new(0);
+        let result = device.reset();
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_set_mem_pool() {
+        let device = Device::new(0);
+
+        // Get the default memory pool to set
+        let default_pool = match device.get_default_mem_pool() {
+            Ok(pool) => pool,
+            Err(e) if e.status == HipStatus::NotSupported => {
+                println!("Memory pools not supported on this device, skipping test");
+                return;
+            }
+            Err(e) => panic!("Unexpected error getting default memory pool: {:?}", e),
+        };
+
+        // Set it as the current memory pool
+        let result = device.set_mem_pool(&default_pool);
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_set_custom_mem_pool() {
+        let device = Device::new(0);
+
+        // Create a custom memory pool for the device with specific properties
+        let custom_props = crate::MemPoolProps::new()
+            .with_location(crate::MemLocationType::Device, device.id())
+            .with_max_size(1024 * 1024 * 10); // 10MB max size
+
+        let custom_pool_result = MemPool::create(custom_props);
+
+        // Skip test if memory pools aren't supported
+        let custom_pool = match custom_pool_result {
+            Ok(pool) => pool,
+            Err(e) if e.status == HipStatus::NotSupported => {
+                println!("Memory pools not supported on this device, skipping test");
+                return;
+            }
+            Err(e) => panic!("Unexpected error creating custom memory pool: {:?}", e),
+        };
+
+        // Set the custom memory pool as the current one
+        let result = device.set_mem_pool(&custom_pool);
+        assert!(result.is_ok());
+
+        // verify that memory can be allocated from this pool
+        let stream = crate::Stream::create().unwrap();
+        let ptr_result = crate::MemoryPointer::<u8>::alloc_async(1024, &stream);
+        assert!(ptr_result.is_ok());
     }
 }
