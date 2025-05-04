@@ -253,6 +253,56 @@ impl Device {
             ((), code).to_result()
         }
     }
+
+    /// Sets the current memory pool for this device.
+    ///
+    /// The memory pool must be local to this device. When `hipMallocAsync` is called,
+    /// it allocates from the current memory pool of the provided stream's device.
+    /// By default, a device's current memory pool is its default memory pool.
+    ///
+    /// # Arguments
+    /// * `mem_pool` - The [`MemPool`] to set as the current memory pool for this device
+    ///
+    /// # Returns
+    /// * `Ok(())` if the memory pool was successfully set
+    /// * `Err(HipError)` if the operation failed
+    ///
+    /// # Errors
+    /// Returns `HipError` if:
+    /// * The device ID is invalid
+    /// * The memory pool is invalid
+    /// * The memory pool is not local to this device
+    /// * The operation is not supported on this device/platform
+    ///
+    /// # Note
+    /// * Use `hipMallocFromPoolAsync` for asynchronous memory allocations from a device
+    ///   different than the one the stream runs on.
+    /// * This functionality is marked as Beta in the HIP API and may change.
+    ///
+    /// # Examples
+    /// ```
+    /// use hip_rs::{Device, MemPool, MemPoolProps, MemLocationType};
+    ///
+    /// let device = Device::new(0);
+    ///
+    /// // Create a memory pool for the device
+    /// let props = MemPoolProps::new()
+    ///     .with_location(MemLocationType::Device, device.id());
+    /// let mem_pool = MemPool::create(props).unwrap();
+    ///
+    /// // Set as current memory pool for the device
+    /// device.set_mem_pool(&mem_pool).unwrap();
+    /// ```
+    ///
+    /// # See Also
+    /// * [`Device::get_default_mem_pool`](Device::get_default_mem_pool)
+    /// * [`MemPool::create`](crate::MemPool::create)
+    pub fn set_mem_pool(&self, mem_pool: &MemPool) -> HipResult<()> {
+        unsafe {
+            let code = sys::hipDeviceSetMemPool(self.id, mem_pool.handle());
+            ((), code).to_result()
+        }
+    }
 }
 
 /// Free Functions
@@ -579,5 +629,55 @@ mod tests {
         let device = Device::new(0);
         let result = device.reset();
         assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_set_mem_pool() {
+        let device = Device::new(0);
+
+        // Get the default memory pool to set
+        let default_pool = match device.get_default_mem_pool() {
+            Ok(pool) => pool,
+            Err(e) if e.status == HipStatus::NotSupported => {
+                println!("Memory pools not supported on this device, skipping test");
+                return;
+            }
+            Err(e) => panic!("Unexpected error getting default memory pool: {:?}", e),
+        };
+
+        // Set it as the current memory pool
+        let result = device.set_mem_pool(&default_pool);
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_set_custom_mem_pool() {
+        let device = Device::new(0);
+
+        // Create a custom memory pool for the device with specific properties
+        let custom_props = crate::MemPoolProps::new()
+            .with_location(crate::MemLocationType::Device, device.id())
+            .with_max_size(1024 * 1024 * 10); // 10MB max size
+
+        let custom_pool_result = MemPool::create(custom_props);
+
+        // Skip test if memory pools aren't supported
+        let custom_pool = match custom_pool_result {
+            Ok(pool) => pool,
+            Err(e) if e.status == HipStatus::NotSupported => {
+                println!("Memory pools not supported on this device, skipping test");
+                return;
+            }
+            Err(e) => panic!("Unexpected error creating custom memory pool: {:?}", e),
+        };
+
+        // Set the custom memory pool as the current one
+        let result = device.set_mem_pool(&custom_pool);
+        assert!(result.is_ok());
+
+        // verify that memory can be allocated from this pool
+        let stream = crate::Stream::create().unwrap();
+        let ptr_result = crate::MemoryPointer::<u8>::alloc_async(1024, &stream);
+        assert!(ptr_result.is_ok());
     }
 }
