@@ -1,6 +1,6 @@
 #[allow(unused_imports)]
 use super::result::{HipError, HipResult, HipStatus};
-use super::{DeviceP2PAttribute, MemPool, PCIBusId};
+use super::{DeviceAttribute, DeviceP2PAttribute, MemPool, PCIBusId};
 use crate::result::ResultExt;
 use crate::sys;
 use semver::Version;
@@ -175,6 +175,43 @@ impl Device {
         unsafe {
             let code = sys::hipDeviceGetDefaultMemPool(&mut mem_pool, self.id);
             (MemPool::from_raw(mem_pool), code).to_result()
+        }
+    }
+
+    /// Gets a specific attribute for this device.
+    ///
+    /// This function retrieves the specified attribute value for the device.
+    /// Different attributes provide various information about the device's capabilities,
+    /// limitations, and features.
+    ///
+    /// # Arguments
+    /// * `attr` - The [`DeviceAttribute`] to query
+    ///
+    /// # Returns
+    /// * `HipResult<i32>` - The attribute value if successful
+    ///
+    /// # Errors
+    /// Returns `HipError` if:
+    /// * The device ID is invalid
+    /// * The attribute is invalid
+    /// * The runtime is not initialized
+    ///
+    /// # Examples
+    /// ```
+    /// use hip_rs::{Device, DeviceAttribute};
+    ///
+    /// let device = Device::new(0);
+    /// let clock_rate = device.get_attribute(DeviceAttribute::ClockRate).unwrap();
+    /// println!("Device clock rate: {} kHz", clock_rate);
+    ///
+    /// let warp_size = device.get_attribute(DeviceAttribute::WarpSize).unwrap();
+    /// println!("Device warp size: {}", warp_size);
+    /// ```
+    pub fn get_attribute(&self, attr: DeviceAttribute) -> HipResult<i32> {
+        let mut value: i32 = 0;
+        unsafe {
+            let code = sys::hipDeviceGetAttribute(&mut value, attr.into(), self.id);
+            (value, code).to_result()
         }
     }
 }
@@ -454,6 +491,46 @@ mod tests {
     fn test_set_invalid_device() {
         let invalid_device = Device::new(99);
         let result = set_device(invalid_device);
+        assert!(result.is_err());
+        assert_eq!(result.unwrap_err().status, HipStatus::InvalidDevice);
+    }
+
+    #[test]
+    fn test_get_attribute() {
+        let device = Device::new(0);
+
+        // Test a few different attributes
+        let clock_rate = device.get_attribute(DeviceAttribute::ClockRate);
+        assert!(clock_rate.is_ok());
+        println!("Device clock rate: {} kHz", clock_rate.unwrap());
+
+        let total_global_mem = device.get_attribute(DeviceAttribute::TotalGlobalMem);
+        assert!(total_global_mem.is_ok());
+        println!("Device global memory: {} bytes", total_global_mem.unwrap());
+
+        let warp_size = device.get_attribute(DeviceAttribute::WarpSize);
+        assert!(warp_size.is_ok());
+        println!("Device warp size: {}", warp_size.unwrap());
+
+        let compute_major = device.get_attribute(DeviceAttribute::ComputeCapabilityMajor);
+        assert!(compute_major.is_ok());
+        let compute_minor = device.get_attribute(DeviceAttribute::ComputeCapabilityMinor);
+        assert!(compute_minor.is_ok());
+        println!(
+            "Compute capability: {}.{}",
+            compute_major.unwrap(),
+            compute_minor.unwrap()
+        );
+
+        let multiprocessor_count = device.get_attribute(DeviceAttribute::MultiprocessorCount);
+        assert!(multiprocessor_count.is_ok());
+        println!("Multiprocessor count: {}", multiprocessor_count.unwrap());
+    }
+
+    #[test]
+    fn test_get_attribute_invalid_device() {
+        let invalid_device = Device::new(99);
+        let result = invalid_device.get_attribute(DeviceAttribute::ClockRate);
         assert!(result.is_err());
         assert_eq!(result.unwrap_err().status, HipStatus::InvalidDevice);
     }
