@@ -214,6 +214,45 @@ impl Device {
             (value, code).to_result()
         }
     }
+
+    /// Resets the state of this device to a fresh state.
+    ///
+    /// # Safety and Synchronization
+    /// This function discards all streams created, memory allocated, kernels running, and events
+    /// created for the current device. The caller must ensure that no other thread is using the
+    /// device or any resources (streams, memory, kernels, events) associated with it.
+    ///
+    /// # Returns
+    /// * `Ok(())` if the reset was successful
+    /// * `Err(HipError)` if the operation failed
+    ///
+    /// # Errors
+    /// Returns `HipError` if:
+    /// * The device ID is invalid
+    /// * The runtime is not initialized
+    ///
+    /// # Examples
+    /// ```
+    /// use hip_rs::Device;
+    ///
+    /// let device = Device::new(0);
+    /// // ... perform device operations ...
+    ///
+    /// // Make sure no other threads are using this device before resetting
+    /// device.reset().unwrap();
+    /// ```
+    ///
+    /// # See Also
+    /// * [`Device::synchronize`](crate::synchronize)
+    pub fn reset(&self) -> HipResult<()> {
+        // First set this device as active
+        set_device(*self)?;
+
+        unsafe {
+            let code = sys::hipDeviceReset();
+            ((), code).to_result()
+        }
+    }
 }
 
 /// Free Functions
@@ -533,5 +572,12 @@ mod tests {
         let result = invalid_device.get_attribute(DeviceAttribute::ClockRate);
         assert!(result.is_err());
         assert_eq!(result.unwrap_err().status, HipStatus::InvalidDevice);
+    }
+
+    #[test]
+    fn test_device_reset() {
+        let device = Device::new(0);
+        let result = device.reset();
+        assert!(result.is_ok());
     }
 }
